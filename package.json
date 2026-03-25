@@ -4,7 +4,7 @@
   "private": true,
   "workspaces": ["server", "tui"],
   "scripts": {
-    "dev": "concurrently --names \"server,tui\" --prefix-colors \"cyan,magenta\" \"bun run --filter server dev\" \"bun run --filter tui dev\"",
+    "dev": "bash -c 'bun run --filter server dev & SERVER_PID=$!; trap \"kill $SERVER_PID 2>/dev/null\" EXIT INT TERM; cd tui && bun run dev'",
     "build": "bun run --filter '*' build",
     "install:all": "bun install"
   },
