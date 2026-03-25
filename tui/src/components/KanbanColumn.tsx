@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Text } from "ink";
 import type { Status, Card } from "../api/types";
+import { useTheme } from "../hooks/useTheme";
 import { CardTile } from "./CardTile";
 
 interface Props {
@@ -20,6 +21,8 @@ export function KanbanColumn({
   height,
   width,
 }: Props) {
+  const theme = useTheme();
+
   // Calculate scroll window
   const visibleCount = Math.max(1, height - 3); // -3 for header/border
   const scrollOffset = Math.max(
@@ -28,30 +31,30 @@ export function KanbanColumn({
   );
   const visibleCards = cards.slice(scrollOffset, scrollOffset + visibleCount);
 
-  const headerColor = isActiveColumn ? "cyan" : "gray";
+  const borderColor = isActiveColumn ? theme.primary : theme.secondary;
 
   return (
     <Box
       flexDirection="column"
       borderStyle="single"
-      borderColor={isActiveColumn ? "cyan" : "gray"}
+      borderColor={borderColor}
       width={width}
     >
       {/* Column header */}
       <Box paddingX={1} justifyContent="space-between">
-        <Text bold color={headerColor}>
+        <Text bold color={borderColor}>
           {status.name.length > width - 8
             ? status.name.slice(0, width - 9) + "…"
             : status.name}
         </Text>
-        <Text color="gray">({cards.length})</Text>
+        <Text color={theme.secondary}>({cards.length})</Text>
       </Box>
-      <Box borderStyle="single" borderColor={isActiveColumn ? "cyan" : "gray"} />
+      <Box borderStyle="single" borderColor={borderColor} />
       {/* Cards */}
       <Box flexDirection="column" flexGrow={1}>
         {visibleCards.length === 0 ? (
           <Box paddingX={1}>
-            <Text color="gray" dimColor>
+            <Text color={theme.secondary} dimColor>
               empty
             </Text>
           </Box>
@@ -61,6 +64,7 @@ export function KanbanColumn({
               key={card.id}
               card={card}
               isSelected={isActiveColumn && scrollOffset + i === selectedCardIndex}
+              maxTitleWidth={Math.max(8, width - 12)}
             />
           ))
         )}
@@ -68,7 +72,7 @@ export function KanbanColumn({
       {/* Scroll indicator */}
       {cards.length > visibleCount && (
         <Box paddingX={1} justifyContent="center">
-          <Text color="gray" dimColor>
+          <Text color={theme.secondary} dimColor>
             {scrollOffset > 0 ? "↑ " : "  "}
             {scrollOffset + visibleCount < cards.length ? "↓" : " "}
           </Text>

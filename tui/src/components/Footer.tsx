@@ -1,11 +1,13 @@
 import React from "react";
 import { Box, Text } from "ink";
 import { useStore } from "../store";
+import { useTheme } from "../hooks/useTheme";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
 import type { Card } from "../api/types";
 
 export function Footer() {
+  const theme = useTheme();
   const focusMode = useStore((s) => s.focusMode);
   const pendingInputRequests = useStore((s) => s.pendingInputRequests);
   const wsStatus = useStore((s) => s.wsStatus);
@@ -23,11 +25,11 @@ export function Footer() {
     : null;
 
   const hints: Record<string, string> = {
-    board: "j/k move  h/l col  Enter open  i input  b/c/a views",
+    board: "j/k move  h/l col  Enter open  i input  b/c/a views  Ctrl+A admin",
     "card-detail": "j/k scroll  e edit  s status  n comment  Esc back",
     chat: "j/k agent  Enter thread  Esc back",
     "chat-thread": "n compose  Esc back",
-    admin: "Tab tab  j/k select  n new  d delete  Esc back",
+    admin: "h/l tabs  j/k select  n new  d delete  Esc back",
     "input-modal": "j/k select  Enter confirm  Tab next question",
     help: "Esc / ? close",
   };
@@ -35,26 +37,26 @@ export function Footer() {
   return (
     <Box
       borderStyle="single"
-      borderColor="gray"
+      borderColor={theme.secondary}
       paddingX={1}
       justifyContent="space-between"
     >
       <Box gap={2}>
-        <Text color="green">Today: {completedToday} done</Text>
+        <Text color={theme.success}>Today: {completedToday} done</Text>
         {firstPending && (
-          <Text color="yellow" bold>
+          <Text color={theme.accent} bold>
             [!] agent {firstPending.cardId.slice(0, 8)} requesting input — press{" "}
-            <Text color="white">i</Text> to answer
+            <Text color={theme.text}>i</Text> to answer
           </Text>
         )}
         {wsStatus !== "connected" && (
-          <Text color="red">
+          <Text color={theme.error}>
             WS {wsStatus === "connecting" ? "connecting…" : "disconnected"}
           </Text>
         )}
       </Box>
-      <Text color="gray" dimColor>
-        {hints[focusMode] ?? "b/c/a views  ? help  Ctrl+C quit"}
+      <Text color={theme.secondary} dimColor>
+        {hints[focusMode] ?? "b/c/a views  ? help  Ctrl+R restart  Ctrl+C quit"}
       </Text>
     </Box>
   );

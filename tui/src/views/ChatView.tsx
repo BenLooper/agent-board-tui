@@ -3,12 +3,14 @@ import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useStore } from "../store";
+import { useTheme } from "../hooks/useTheme";
 import { api } from "../api/client";
 import type { Conversation, QueueMessage } from "../api/types";
 
 type ChatMode = "conversations" | "thread" | "compose";
 
 export function ChatView() {
+  const theme = useTheme();
   const focusMode = useStore((s) => s.focusMode);
   const setFocusMode = useStore((s) => s.setFocusMode);
   const setView = useStore((s) => s.setView);
@@ -75,7 +77,6 @@ export function ChatView() {
             setFocusMode("chat-thread");
           }
         } else if (input === "n") {
-          // New conversation
           setComposeForAgent(null);
           setNewAgentId("");
           setComposeValue("");
@@ -101,26 +102,22 @@ export function ChatView() {
   const renderConversations = () => (
     <Box flexDirection="column" flexGrow={1}>
       <Box marginBottom={1}>
-        <Text bold color="cyan">
+        <Text bold color={theme.primary}>
           Conversations
         </Text>
-        <Text color="gray" dimColor>
+        <Text color={theme.secondary} dimColor>
           {" "}— n=new  Enter=open  Esc=back
         </Text>
       </Box>
       {conversations.length === 0 ? (
-        <Text color="gray" dimColor>
+        <Text color={theme.secondary} dimColor>
           No conversations yet. Agents will appear here when they send messages.
         </Text>
       ) : (
         conversations.map((conv, i) => (
-          <Box
-            key={conv.agentId}
-            paddingX={1}
-            gap={1}
-          >
+          <Box key={conv.agentId} paddingX={1} gap={1}>
             <Text
-              color={i === selectedIndex ? "cyan" : undefined}
+              color={i === selectedIndex ? theme.primary : undefined}
               bold={i === selectedIndex}
               inverse={i === selectedIndex}
             >
@@ -128,11 +125,11 @@ export function ChatView() {
               {conv.agentId.length > 20 ? conv.agentId.slice(0, 19) + "…" : conv.agentId}
             </Text>
             {conv.unread > 0 && (
-              <Text color="yellow" bold>
+              <Text color={theme.accent} bold>
                 [{conv.unread} unread]
               </Text>
             )}
-            <Text color="gray" dimColor>
+            <Text color={theme.secondary} dimColor>
               {conv.total} msgs
             </Text>
           </Box>
@@ -144,26 +141,26 @@ export function ChatView() {
   const renderThread = () => (
     <Box flexDirection="column" flexGrow={1}>
       <Box marginBottom={1} gap={1}>
-        <Text bold color="cyan">
+        <Text bold color={theme.primary}>
           @{selectedAgentId}
         </Text>
-        <Text color="gray" dimColor>
+        <Text color={theme.secondary} dimColor>
           — n=reply  Esc=back
         </Text>
       </Box>
       <Box flexDirection="column" flexGrow={1}>
         {messages.length === 0 ? (
-          <Text color="gray" dimColor>
+          <Text color={theme.secondary} dimColor>
             No messages yet.
           </Text>
         ) : (
           messages.map((msg) => (
             <Box key={msg.id} flexDirection="column" marginBottom={1} paddingX={1}>
               <Box gap={1}>
-                <Text bold color={msg.author === "user" ? "green" : "blue"}>
+                <Text bold color={msg.author === "user" ? theme.success : theme.info}>
                   {msg.author === "user" ? "👤 you" : `🤖 ${msg.agentId}`}
                 </Text>
-                <Text color="gray" dimColor>
+                <Text color={theme.secondary} dimColor>
                   {msg.status === "pending" ? "● unread" : ""}
                 </Text>
               </Box>
@@ -177,12 +174,12 @@ export function ChatView() {
 
   const renderCompose = () => (
     <Box flexDirection="column" gap={1} flexGrow={1}>
-      <Text bold color="cyan">
+      <Text bold color={theme.primary}>
         New Message
       </Text>
       {!composeForAgent && (
         <Box gap={1}>
-          <Text color="cyan">Agent ID:</Text>
+          <Text color={theme.primary}>Agent ID:</Text>
           <TextInput
             value={newAgentId}
             onChange={setNewAgentId}
@@ -194,7 +191,7 @@ export function ChatView() {
       )}
       {composeForAgent && (
         <Box gap={1}>
-          <Text color="cyan">To @{composeForAgent} →</Text>
+          <Text color={theme.primary}>To @{composeForAgent} →</Text>
           <TextInput
             value={composeValue}
             onChange={setComposeValue}
@@ -204,8 +201,8 @@ export function ChatView() {
           />
         </Box>
       )}
-      {sending && <Text color="green">Sending…</Text>}
-      <Text color="gray" dimColor>
+      {sending && <Text color={theme.success}>Sending…</Text>}
+      <Text color={theme.secondary} dimColor>
         Enter to send  Esc to cancel
       </Text>
     </Box>
@@ -216,7 +213,7 @@ export function ChatView() {
       flexDirection="column"
       flexGrow={1}
       borderStyle="single"
-      borderColor="gray"
+      borderColor={theme.secondary}
       paddingX={1}
     >
       {chatMode === "conversations" && renderConversations()}

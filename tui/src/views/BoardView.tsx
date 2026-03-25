@@ -1,10 +1,12 @@
 import React, { useCallback } from "react";
-import { Box, Text, useInput, useStdout } from "ink";
+import { Box, Text, useInput } from "ink";
 import { useQuery } from "@tanstack/react-query";
 import { useStore } from "../store";
+import { useTheme } from "../hooks/useTheme";
 import { api } from "../api/client";
 import type { Status, Card } from "../api/types";
 import { KanbanColumn } from "../components/KanbanColumn";
+import { useDimensions } from "../hooks/useDimensions";
 
 interface Props {
   onOpenCard: (id: string) => void;
@@ -12,6 +14,7 @@ interface Props {
 }
 
 export function BoardView({ onOpenCard, onOpenInput }: Props) {
+  const theme = useTheme();
   const focusMode = useStore((s) => s.focusMode);
   const selectedColumn = useStore((s) => s.selectedColumn);
   const setSelectedColumn = useStore((s) => s.setSelectedColumn);
@@ -19,9 +22,7 @@ export function BoardView({ onOpenCard, onOpenInput }: Props) {
   const setSelectedCardIndex = useStore((s) => s.setSelectedCardIndex);
   const pendingInputRequests = useStore((s) => s.pendingInputRequests);
 
-  const { stdout } = useStdout();
-  const termWidth = stdout?.columns ?? 120;
-  const termHeight = stdout?.rows ?? 30;
+  const { width: termWidth, height: termHeight } = useDimensions();
 
   const { data: statuses = [] } = useQuery({
     queryKey: ["statuses"],
@@ -76,7 +77,7 @@ export function BoardView({ onOpenCard, onOpenInput }: Props) {
   if (sortedStatuses.length === 0) {
     return (
       <Box flexGrow={1} justifyContent="center" alignItems="center">
-        <Text color="gray">No statuses configured. Go to Admin to add some.</Text>
+        <Text color={theme.secondary}>No statuses configured. Go to Admin to add some.</Text>
       </Box>
     );
   }

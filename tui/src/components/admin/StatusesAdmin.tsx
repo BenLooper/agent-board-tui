@@ -3,6 +3,7 @@ import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/client";
+import { useTheme } from "../../hooks/useTheme";
 import type { Status } from "../../api/types";
 
 interface Props {
@@ -14,6 +15,7 @@ type AdminMode = "list" | "create" | "edit";
 const COLORS = ["#6366f1", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#f97316"];
 
 export function StatusesAdmin({ isActive }: Props) {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<AdminMode>("list");
   const [selectedIdx, setSelectedIdx] = useState(0);
@@ -76,25 +78,23 @@ export function StatusesAdmin({ isActive }: Props) {
     { isActive }
   );
 
-  const selected = sorted[selectedIdx];
-
   return (
     <Box flexDirection="column" gap={1}>
-      <Text bold color="cyan">Statuses</Text>
-      {error && <Text color="red">{error}</Text>}
+      <Text bold color={theme.primary}>Statuses</Text>
+      {error && <Text color={theme.error}>{error}</Text>}
 
       {mode === "list" && (
         <>
           {sorted.map((s, i) => (
             <Box key={s.id} gap={1} paddingX={1}>
-              <Text color={i === selectedIdx ? "cyan" : undefined} inverse={i === selectedIdx}>
+              <Text color={i === selectedIdx ? theme.primary : undefined} inverse={i === selectedIdx}>
                 {i === selectedIdx ? "▶ " : "  "}
                 <Text color={s.color}>{s.name}</Text>
               </Text>
             </Box>
           ))}
-          {sorted.length === 0 && <Text color="gray" dimColor>No statuses. Press n to create.</Text>}
-          <Box marginTop={1}><Text color="gray" dimColor>n=create  e=edit  d=delete  j/k=navigate</Text></Box>
+          {sorted.length === 0 && <Text color={theme.secondary} dimColor>No statuses. Press n to create.</Text>}
+          <Box marginTop={1}><Text color={theme.secondary} dimColor>n=create  e=edit  d=delete  j/k=navigate</Text></Box>
         </>
       )}
 
@@ -102,18 +102,18 @@ export function StatusesAdmin({ isActive }: Props) {
         <Box flexDirection="column" gap={1}>
           <Text bold>Create Status</Text>
           <Box gap={1}>
-            <Text color="cyan">Name:</Text>
+            <Text color={theme.primary}>Name:</Text>
             <TextInput value={nameValue} onChange={setNameValue} onSubmit={createStatus} focus={isActive} />
           </Box>
           <Box gap={1}>
-            <Text color="cyan">Color:</Text>
+            <Text color={theme.primary}>Color:</Text>
             {COLORS.map((c, i) => (
-              <Text key={c} color={i === colorIdx ? "white" : "gray"} inverse={i === colorIdx}>
+              <Text key={c} color={i === colorIdx ? theme.text : theme.secondary} inverse={i === colorIdx}>
                 {c}
               </Text>
             ))}
           </Box>
-          <Text color="gray" dimColor>Enter to save  Esc to cancel</Text>
+          <Text color={theme.secondary} dimColor>Enter to save  Esc to cancel</Text>
         </Box>
       )}
 
@@ -121,10 +121,10 @@ export function StatusesAdmin({ isActive }: Props) {
         <Box flexDirection="column" gap={1}>
           <Text bold>Edit Status</Text>
           <Box gap={1}>
-            <Text color="cyan">Name:</Text>
+            <Text color={theme.primary}>Name:</Text>
             <TextInput value={nameValue} onChange={setNameValue} onSubmit={updateStatus} focus={isActive} />
           </Box>
-          <Text color="gray" dimColor>Enter to save  Esc to cancel</Text>
+          <Text color={theme.secondary} dimColor>Enter to save  Esc to cancel</Text>
         </Box>
       )}
     </Box>

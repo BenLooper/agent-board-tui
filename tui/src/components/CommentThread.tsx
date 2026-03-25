@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Text } from "ink";
 import type { Comment } from "../api/types";
+import { useTheme } from "../hooks/useTheme";
 
 interface Props {
   comments: Comment[];
@@ -17,12 +18,13 @@ function formatTime(iso: string): string {
 }
 
 export function CommentThread({ comments, maxHeight }: Props) {
+  const theme = useTheme();
   const visible = maxHeight ? comments.slice(-maxHeight) : comments;
 
   if (visible.length === 0) {
     return (
       <Box paddingX={1}>
-        <Text color="gray" dimColor>
+        <Text color={theme.secondary} dimColor>
           No comments yet.
         </Text>
       </Box>
@@ -34,10 +36,10 @@ export function CommentThread({ comments, maxHeight }: Props) {
       {visible.map((c) => (
         <Box key={c.id} flexDirection="column" paddingX={1} marginBottom={0}>
           <Box gap={1}>
-            <Text bold color={c.author === "agent" ? "blue" : "green"}>
+            <Text bold color={c.author === "agent" ? theme.info : theme.success}>
               {c.author === "agent" ? "🤖 agent" : "👤 you"}
             </Text>
-            <Text color="gray" dimColor>
+            <Text color={theme.secondary} dimColor>
               {formatTime(c.createdAt)}
             </Text>
           </Box>

@@ -3,6 +3,7 @@ import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/client";
+import { useTheme } from "../../hooks/useTheme";
 import type { Epic, Status } from "../../api/types";
 
 interface Props {
@@ -12,12 +13,13 @@ interface Props {
 type Mode = "list" | "create" | "edit";
 
 export function EpicsAdmin({ isActive }: Props) {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<Mode>("list");
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [titleValue, setTitleValue] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
-  const [titleStep, setTitleStep] = useState(true); // title first, then desc
+  const [titleStep, setTitleStep] = useState(true);
   const [descValue, setDescValue] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -87,22 +89,22 @@ export function EpicsAdmin({ isActive }: Props) {
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Text bold color="cyan">Epics</Text>
-      {error && <Text color="red">{error}</Text>}
+      <Text bold color={theme.primary}>Epics</Text>
+      {error && <Text color={theme.error}>{error}</Text>}
 
       {mode === "list" && (
         <>
           {epics.map((ep, i) => (
             <Box key={ep.id} paddingX={1}>
-              <Text color={i === selectedIdx ? "cyan" : undefined} inverse={i === selectedIdx}>
+              <Text color={i === selectedIdx ? theme.primary : undefined} inverse={i === selectedIdx}>
                 {i === selectedIdx ? "▶ " : "  "}
                 {ep.title}
-                <Text color="gray" dimColor> [{getStatusName(ep.statusId)}]</Text>
+                <Text color={theme.secondary} dimColor> [{getStatusName(ep.statusId)}]</Text>
               </Text>
             </Box>
           ))}
-          {epics.length === 0 && <Text color="gray" dimColor>No epics. Press n to create.</Text>}
-          <Box marginTop={1}><Text color="gray" dimColor>n=create  e=edit  d=delete  j/k=navigate</Text></Box>
+          {epics.length === 0 && <Text color={theme.secondary} dimColor>No epics. Press n to create.</Text>}
+          <Box marginTop={1}><Text color={theme.secondary} dimColor>n=create  e=edit  d=delete  j/k=navigate</Text></Box>
         </>
       )}
 
@@ -111,7 +113,7 @@ export function EpicsAdmin({ isActive }: Props) {
           <Text bold>{mode === "create" ? "Create" : "Edit"} Epic</Text>
           {titleStep ? (
             <Box gap={1}>
-              <Text color="cyan">Title:</Text>
+              <Text color={theme.primary}>Title:</Text>
               <TextInput
                 value={titleValue}
                 onChange={setTitleValue}
@@ -121,7 +123,7 @@ export function EpicsAdmin({ isActive }: Props) {
             </Box>
           ) : (
             <Box gap={1}>
-              <Text color="cyan">Description:</Text>
+              <Text color={theme.primary}>Description:</Text>
               <TextInput
                 value={descValue}
                 onChange={setDescValue}
@@ -130,7 +132,7 @@ export function EpicsAdmin({ isActive }: Props) {
               />
             </Box>
           )}
-          <Text color="gray" dimColor>Enter to advance  Esc to cancel</Text>
+          <Text color={theme.secondary} dimColor>Enter to advance  Esc to cancel</Text>
         </Box>
       )}
     </Box>
