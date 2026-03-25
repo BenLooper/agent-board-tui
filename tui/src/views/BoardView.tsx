@@ -2,6 +2,7 @@ import React, { useCallback } from "react";
 import { Box, Text, useInput } from "ink";
 import { useQuery } from "@tanstack/react-query";
 import { useStore } from "../store";
+import { useTheme } from "../hooks/useTheme";
 import { api } from "../api/client";
 import type { Status, Card } from "../api/types";
 import { KanbanColumn } from "../components/KanbanColumn";
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function BoardView({ onOpenCard, onOpenInput }: Props) {
+  const theme = useTheme();
   const focusMode = useStore((s) => s.focusMode);
   const selectedColumn = useStore((s) => s.selectedColumn);
   const setSelectedColumn = useStore((s) => s.setSelectedColumn);
@@ -75,7 +77,7 @@ export function BoardView({ onOpenCard, onOpenInput }: Props) {
   if (sortedStatuses.length === 0) {
     return (
       <Box flexGrow={1} justifyContent="center" alignItems="center">
-        <Text color="gray">No statuses configured. Go to Admin to add some.</Text>
+        <Text color={theme.secondary}>No statuses configured. Go to Admin to add some.</Text>
       </Box>
     );
   }

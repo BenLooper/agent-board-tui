@@ -45,6 +45,14 @@ function AppInner() {
       return;
     }
 
+    // Ctrl+A → open admin from anywhere (except input-modal)
+    if (key.ctrl && input === "a" && focusMode !== "input-modal") {
+      setOpenCardId(null);
+      setView("admin");
+      setFocusMode("admin");
+      return;
+    }
+
     // When text inputs have focus, don't intercept
     if (focusMode === "card-detail" || focusMode === "input-modal" || focusMode === "chat-thread") {
       return;

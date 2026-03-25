@@ -1,8 +1,11 @@
 import { create } from "zustand";
+import { homedir } from "os";
+import { join } from "path";
+import { readFileSync, writeFileSync, mkdirSync } from "fs";
 import type { InputRequest } from "../api/types";
 
 export type View = "board" | "chat" | "admin";
-export type AdminTab = "statuses" | "epics" | "features" | "rules";
+export type AdminTab = "statuses" | "epics" | "features" | "rules" | "theme";
 export type WsStatus = "connecting" | "connected" | "disconnected";
 
 // Which component currently "owns" keyboard input
@@ -14,6 +17,28 @@ export type FocusMode =
   | "admin"
   | "input-modal"
   | "help";
+
+// --- Settings persistence ---
+const SETTINGS_DIR = join(homedir(), ".config", "agent-board");
+const SETTINGS_FILE = join(SETTINGS_DIR, "settings.json");
+
+function loadThemeIndex(): number {
+  try {
+    const data = JSON.parse(readFileSync(SETTINGS_FILE, "utf-8"));
+    return typeof data.themeIndex === "number" ? data.themeIndex : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveThemeIndex(index: number): void {
+  try {
+    mkdirSync(SETTINGS_DIR, { recursive: true });
+    writeFileSync(SETTINGS_FILE, JSON.stringify({ themeIndex: index }));
+  } catch {
+    // silently ignore write errors
+  }
+}
 
 interface Store {
   // Current main view
@@ -68,6 +93,10 @@ interface Store {
   // Help overlay
   helpOpen: boolean;
   setHelpOpen: (b: boolean) => void;
+
+  // Theme
+  themeIndex: number;
+  setThemeIndex: (n: number) => void;
 }
 
 export const useStore = create<Store>((set) => ({
@@ -133,4 +162,10 @@ export const useStore = create<Store>((set) => ({
 
   helpOpen: false,
   setHelpOpen: (b) => set({ helpOpen: b }),
+
+  themeIndex: loadThemeIndex(),
+  setThemeIndex: (n) => {
+    saveThemeIndex(n);
+    set({ themeIndex: n });
+  },
 }));

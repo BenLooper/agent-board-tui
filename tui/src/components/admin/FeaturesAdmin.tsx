@@ -4,6 +4,7 @@ import TextInput from "ink-text-input";
 import SelectInput from "ink-select-input";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/client";
+import { useTheme } from "../../hooks/useTheme";
 import type { Feature, Epic } from "../../api/types";
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 type Mode = "list" | "create-title" | "create-epic" | "edit";
 
 export function FeaturesAdmin({ isActive }: Props) {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<Mode>("list");
   const [selectedIdx, setSelectedIdx] = useState(0);
@@ -81,22 +83,22 @@ export function FeaturesAdmin({ isActive }: Props) {
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Text bold color="cyan">Features</Text>
-      {error && <Text color="red">{error}</Text>}
+      <Text bold color={theme.primary}>Features</Text>
+      {error && <Text color={theme.error}>{error}</Text>}
 
       {mode === "list" && (
         <>
           {features.map((f, i) => (
             <Box key={f.id} paddingX={1}>
-              <Text color={i === selectedIdx ? "cyan" : undefined} inverse={i === selectedIdx}>
+              <Text color={i === selectedIdx ? theme.primary : undefined} inverse={i === selectedIdx}>
                 {i === selectedIdx ? "▶ " : "  "}
                 {f.title}
-                <Text color="gray" dimColor> [{getEpicTitle(f.epicId)}]</Text>
+                <Text color={theme.secondary} dimColor> [{getEpicTitle(f.epicId)}]</Text>
               </Text>
             </Box>
           ))}
-          {features.length === 0 && <Text color="gray" dimColor>No features. Press n to create.</Text>}
-          <Box marginTop={1}><Text color="gray" dimColor>n=create  e=edit  d=delete  j/k=navigate</Text></Box>
+          {features.length === 0 && <Text color={theme.secondary} dimColor>No features. Press n to create.</Text>}
+          <Box marginTop={1}><Text color={theme.secondary} dimColor>n=create  e=edit  d=delete  j/k=navigate</Text></Box>
         </>
       )}
 
@@ -104,7 +106,7 @@ export function FeaturesAdmin({ isActive }: Props) {
         <Box flexDirection="column" gap={1}>
           <Text bold>Create Feature — Title</Text>
           <Box gap={1}>
-            <Text color="cyan">Title:</Text>
+            <Text color={theme.primary}>Title:</Text>
             <TextInput
               value={titleValue}
               onChange={setTitleValue}
@@ -119,7 +121,7 @@ export function FeaturesAdmin({ isActive }: Props) {
         <Box flexDirection="column" gap={1}>
           <Text bold>Create Feature — Select Epic</Text>
           {epics.length === 0 ? (
-            <Text color="red">No epics found. Create an epic first.</Text>
+            <Text color={theme.error}>No epics found. Create an epic first.</Text>
           ) : (
             <SelectInput
               items={epics.map((e) => ({ label: e.title, value: e.id }))}
@@ -134,7 +136,7 @@ export function FeaturesAdmin({ isActive }: Props) {
         <Box flexDirection="column" gap={1}>
           <Text bold>Edit Feature</Text>
           <Box gap={1}>
-            <Text color="cyan">Title:</Text>
+            <Text color={theme.primary}>Title:</Text>
             <TextInput value={titleValue} onChange={setTitleValue} onSubmit={update} focus={isActive} />
           </Box>
         </Box>

@@ -1,10 +1,11 @@
 import React, { useState, useCallback } from "react";
 import { Box, Text, useInput } from "ink";
-import { useDimensions } from "../hooks/useDimensions";
 import TextInput from "ink-text-input";
 import SelectInput from "ink-select-input";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useStore } from "../store";
+import { useTheme } from "../hooks/useTheme";
+import { useDimensions } from "../hooks/useDimensions";
 import { api } from "../api/client";
 import type { CardWithComments, Status } from "../api/types";
 import { CommentThread } from "../components/CommentThread";
@@ -17,9 +18,14 @@ interface Props {
 type EditMode = "view" | "edit-title" | "edit-desc" | "edit-status" | "add-comment";
 
 export function CardDetailView({ cardId, onClose }: Props) {
+  const theme = useTheme();
   const focusMode = useStore((s) => s.focusMode);
   const clearUnseenComment = useStore((s) => s.clearUnseenComment);
   const queryClient = useQueryClient();
+
+  const { height: termHeight } = useDimensions();
+  // fixed overhead: header(2) + status(1) + description(4) + edit/hint(2) + borders(3)
+  const commentMaxHeight = Math.max(4, termHeight - 14);
 
   const [mode, setMode] = useState<EditMode>("view");
   const [titleValue, setTitleValue] = useState("");
@@ -28,10 +34,6 @@ export function CardDetailView({ cardId, onClose }: Props) {
   const [scrollOffset, setScrollOffset] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const { height: termHeight } = useDimensions();
-  // fixed overhead: header(2) + status(1) + description(4) + edit/hint(2) + borders(3)
-  const commentMaxHeight = Math.max(4, termHeight - 14);
 
   const { data: card, isLoading } = useQuery({
     queryKey: ["card", cardId],
@@ -136,25 +138,29 @@ export function CardDetailView({ cardId, onClose }: Props) {
   if (isLoading || !card) {
     return (
       <Box flexGrow={1} justifyContent="center" alignItems="center">
-        <Text color="gray">Loading card…</Text>
+        <Text color={theme.secondary}>Loading card…</Text>
       </Box>
     );
   }
 
-  const TYPE_COLORS: Record<string, string> = { story: "blue", bug: "red", task: "green" };
+  const TYPE_COLORS: Record<string, string> = {
+    story: theme.info,
+    bug: theme.error,
+    task: theme.success,
+  };
 
   return (
     <Box flexDirection="column" flexGrow={1} paddingX={1}>
       {/* Header */}
       <Box gap={1} marginBottom={1}>
-        <Text bold color={TYPE_COLORS[card.type] ?? "white"}>
+        <Text bold color={TYPE_COLORS[card.type] ?? theme.text}>
           [{card.type.toUpperCase()}]
         </Text>
-        <Text bold color="cyan" wrap="wrap">
+        <Text bold color={theme.primary} wrap="wrap">
           {card.title}
         </Text>
         {card.agentId && (
-          <Text color="gray" dimColor>
+          <Text color={theme.secondary} dimColor>
             @{card.agentId}
           </Text>
         )}
@@ -164,12 +170,12 @@ export function CardDetailView({ cardId, onClose }: Props) {
       <Box gap={2} marginBottom={1}>
         <Text>
           Status:{" "}
-          <Text color="yellow" bold>
+          <Text color={theme.accent} bold>
             {currentStatus?.name ?? card.statusId}
           </Text>
         </Text>
         {card.completedAt && (
-          <Text color="green">✓ Completed</Text>
+          <Text color={theme.success}>✓ Completed</Text>
         )}
       </Box>
 
@@ -177,12 +183,12 @@ export function CardDetailView({ cardId, onClose }: Props) {
       {card.description && (
         <Box
           borderStyle="single"
-          borderColor="gray"
+          borderColor={theme.secondary}
           paddingX={1}
           marginBottom={1}
           flexDirection="column"
         >
-          <Text bold color="gray">
+          <Text bold color={theme.secondary}>
             Description
           </Text>
           <Text wrap="wrap">{card.description}</Text>
@@ -192,7 +198,7 @@ export function CardDetailView({ cardId, onClose }: Props) {
       {/* Edit modes */}
       {mode === "edit-title" && (
         <Box gap={1} marginBottom={1}>
-          <Text color="cyan">Title:</Text>
+          <Text color={theme.primary}>Title:</Text>
           <TextInput
             value={titleValue}
             onChange={setTitleValue}
@@ -204,7 +210,7 @@ export function CardDetailView({ cardId, onClose }: Props) {
 
       {mode === "edit-desc" && (
         <Box gap={1} marginBottom={1}>
-          <Text color="cyan">Desc:</Text>
+          <Text color={theme.primary}>Desc:</Text>
           <TextInput
             value={descValue}
             onChange={setDescValue}
@@ -216,7 +222,7 @@ export function CardDetailView({ cardId, onClose }: Props) {
 
       {mode === "edit-status" && (
         <Box flexDirection="column" marginBottom={1}>
-          <Text color="cyan" bold>
+          <Text color={theme.primary} bold>
             Select new status:
           </Text>
           <SelectInput
@@ -229,7 +235,7 @@ export function CardDetailView({ cardId, onClose }: Props) {
 
       {mode === "add-comment" && (
         <Box gap={1} marginBottom={1}>
-          <Text color="cyan">Comment:</Text>
+          <Text color={theme.primary}>Comment:</Text>
           <TextInput
             value={commentValue}
             onChange={setCommentValue}
@@ -239,12 +245,12 @@ export function CardDetailView({ cardId, onClose }: Props) {
         </Box>
       )}
 
-      {saving && <Text color="green">Saving…</Text>}
-      {error && <Text color="red">Error: {error}</Text>}
+      {saving && <Text color={theme.success}>Saving…</Text>}
+      {error && <Text color={theme.error}>Error: {error}</Text>}
 
       {/* Comments */}
-      <Box borderStyle="single" borderColor="gray" flexDirection="column" flexGrow={1}>
-        <Box paddingLeft={1}><Text bold color="gray">
+      <Box borderStyle="single" borderColor={theme.secondary} flexDirection="column" flexGrow={1}>
+        <Box paddingLeft={1}><Text bold color={theme.secondary}>
           Comments ({card.comments.length})
         </Text></Box>
         <CommentThread
@@ -256,7 +262,7 @@ export function CardDetailView({ cardId, onClose }: Props) {
       {/* Hints */}
       {mode === "view" && (
         <Box marginTop={1}>
-          <Text color="gray" dimColor>
+          <Text color={theme.secondary} dimColor>
             e=edit title  E=edit desc  s=status  n=comment  j/k=scroll  Esc=close
           </Text>
         </Box>

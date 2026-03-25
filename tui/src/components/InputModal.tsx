@@ -3,6 +3,7 @@ import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
 import SelectInput from "ink-select-input";
 import { useStore } from "../store";
+import { useTheme } from "../hooks/useTheme";
 import { api } from "../api/client";
 import type { InputRequest, Question } from "../api/types";
 
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function InputModal({ request }: Props) {
+  const theme = useTheme();
   const focusMode = useStore((s) => s.focusMode);
   const setFocusMode = useStore((s) => s.setFocusMode);
   const view = useStore((s) => s.view);
@@ -54,7 +56,6 @@ export function InputModal({ request }: Props) {
   useInput(
     (input, key) => {
       if (key.escape && !submitting) {
-        // Can't really cancel an input request — just go back to view
         setFocusMode(view as "board" | "chat" | "admin");
       }
     },
@@ -67,15 +68,15 @@ export function InputModal({ request }: Props) {
     <Box
       flexDirection="column"
       borderStyle="double"
-      borderColor="yellow"
+      borderColor={theme.accent}
       paddingX={2}
       paddingY={1}
     >
       <Box marginBottom={1} justifyContent="space-between">
-        <Text bold color="yellow">
+        <Text bold color={theme.accent}>
           Agent Input Request
         </Text>
-        <Text color="gray">
+        <Text color={theme.secondary}>
           Question {currentQ + 1} / {request.questions.length}
         </Text>
       </Box>
@@ -105,7 +106,7 @@ export function InputModal({ request }: Props) {
 
       {question.type === "text" && (
         <Box gap={1}>
-          <Text color="cyan">▶</Text>
+          <Text color={theme.primary}>▶</Text>
           <TextInput
             value={textValue}
             onChange={setTextValue}
@@ -117,18 +118,18 @@ export function InputModal({ request }: Props) {
 
       {submitting && (
         <Box marginTop={1}>
-          <Text color="green">Submitting answers…</Text>
+          <Text color={theme.success}>Submitting answers…</Text>
         </Box>
       )}
 
       {error && (
         <Box marginTop={1}>
-          <Text color="red">Error: {error}</Text>
+          <Text color={theme.error}>Error: {error}</Text>
         </Box>
       )}
 
       <Box marginTop={1}>
-        <Text color="gray" dimColor>
+        <Text color={theme.secondary} dimColor>
           {question.type === "text"
             ? "Enter to confirm  Esc to dismiss"
             : "j/k select  Enter confirm  Esc dismiss"}

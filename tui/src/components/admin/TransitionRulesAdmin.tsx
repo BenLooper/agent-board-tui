@@ -4,6 +4,7 @@ import TextInput from "ink-text-input";
 import SelectInput from "ink-select-input";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/client";
+import { useTheme } from "../../hooks/useTheme";
 import type { TransitionRule, Status } from "../../api/types";
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 type Mode = "list" | "create-pattern" | "create-from" | "create-to";
 
 export function TransitionRulesAdmin({ isActive }: Props) {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<Mode>("list");
   const [selectedIdx, setSelectedIdx] = useState(0);
@@ -80,15 +82,15 @@ export function TransitionRulesAdmin({ isActive }: Props) {
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Text bold color="cyan">Transition Rules</Text>
-      <Text color="gray" dimColor>Rules restrict which agents can move cards to which statuses.</Text>
-      {error && <Text color="red">{error}</Text>}
+      <Text bold color={theme.primary}>Transition Rules</Text>
+      <Text color={theme.secondary} dimColor>Rules restrict which agents can move cards to which statuses.</Text>
+      {error && <Text color={theme.error}>{error}</Text>}
 
       {mode === "list" && (
         <>
           {rules.map((r, i) => (
             <Box key={r.id} paddingX={1}>
-              <Text color={i === selectedIdx ? "cyan" : undefined} inverse={i === selectedIdx}>
+              <Text color={i === selectedIdx ? theme.primary : undefined} inverse={i === selectedIdx}>
                 {i === selectedIdx ? "▶ " : "  "}
                 {r.agentPattern ?? "*"}
                 {" → "}
@@ -96,17 +98,17 @@ export function TransitionRulesAdmin({ isActive }: Props) {
               </Text>
             </Box>
           ))}
-          {rules.length === 0 && <Text color="gray" dimColor>No rules (all transitions allowed). Press n to create.</Text>}
-          <Box marginTop={1}><Text color="gray" dimColor>n=create  d=delete  j/k=navigate</Text></Box>
+          {rules.length === 0 && <Text color={theme.secondary} dimColor>No rules (all transitions allowed). Press n to create.</Text>}
+          <Box marginTop={1}><Text color={theme.secondary} dimColor>n=create  d=delete  j/k=navigate</Text></Box>
         </>
       )}
 
       {mode === "create-pattern" && (
         <Box flexDirection="column" gap={1}>
           <Text bold>Create Rule — Agent Pattern</Text>
-          <Text color="gray" dimColor>Leave blank to match all agents. Use * as wildcard (e.g. "bot-*").</Text>
+          <Text color={theme.secondary} dimColor>Leave blank to match all agents. Use * as wildcard (e.g. "bot-*").</Text>
           <Box gap={1}>
-            <Text color="cyan">Pattern:</Text>
+            <Text color={theme.primary}>Pattern:</Text>
             <TextInput
               value={patternValue}
               onChange={setPatternValue}
