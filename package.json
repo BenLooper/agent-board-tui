@@ -4,7 +4,7 @@
   "private": true,
   "workspaces": ["server", "tui"],
   "scripts": {
-    "dev": "bash -c 'bun run --filter server dev & SERVER_PID=$!; trap \"kill $SERVER_PID 2>/dev/null\" EXIT INT TERM; cd tui && bun run dev'",
+    "dev": "bun scripts/dev.ts",
     "build": "bun run --filter '*' build",
     "install:all": "bun install"
   },
