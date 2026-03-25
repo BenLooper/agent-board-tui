@@ -61,6 +61,7 @@ export function KanbanColumn({
               key={card.id}
               card={card}
               isSelected={isActiveColumn && scrollOffset + i === selectedCardIndex}
+              maxTitleWidth={Math.max(8, width - 12)}
             />
           ))
         )}

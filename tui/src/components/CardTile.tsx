@@ -6,6 +6,7 @@ import { useStore } from "../store";
 interface Props {
   card: Card;
   isSelected: boolean;
+  maxTitleWidth?: number;
 }
 
 const TYPE_BADGE: Record<Card["type"], { label: string; color: string }> = {
@@ -14,7 +15,7 @@ const TYPE_BADGE: Record<Card["type"], { label: string; color: string }> = {
   task: { label: "T", color: "green" },
 };
 
-export function CardTile({ card, isSelected }: Props) {
+export function CardTile({ card, isSelected, maxTitleWidth = 20 }: Props) {
   const pulsingCardIds = useStore((s) => s.pulsingCardIds);
   const unseenCommentCardIds = useStore((s) => s.unseenCommentCardIds);
 
@@ -35,7 +36,7 @@ export function CardTile({ card, isSelected }: Props) {
         <Text color={badge.color} bold>
           [{badge.label}]
         </Text>{" "}
-        {card.title.length > 20 ? card.title.slice(0, 19) + "…" : card.title}
+        {card.title.length > maxTitleWidth ? card.title.slice(0, maxTitleWidth - 1) + "…" : card.title}
         {isPulsing ? (
           <Text color="yellow"> !</Text>
         ) : hasUnseen ? (

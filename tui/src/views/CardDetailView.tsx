@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { Box, Text, useInput } from "ink";
+import { useDimensions } from "../hooks/useDimensions";
 import TextInput from "ink-text-input";
 import SelectInput from "ink-select-input";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,6 +28,10 @@ export function CardDetailView({ cardId, onClose }: Props) {
   const [scrollOffset, setScrollOffset] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { height: termHeight } = useDimensions();
+  // fixed overhead: header(2) + status(1) + description(4) + edit/hint(2) + borders(3)
+  const commentMaxHeight = Math.max(4, termHeight - 14);
 
   const { data: card, isLoading } = useQuery({
     queryKey: ["card", cardId],
@@ -120,7 +125,7 @@ export function CardDetailView({ cardId, onClose }: Props) {
         setCommentValue("");
         setMode("add-comment");
       } else if ((key.downArrow || input === "j") && card?.comments) {
-        setScrollOffset((o) => Math.min(o + 1, Math.max(0, card.comments.length - 5)));
+        setScrollOffset((o) => Math.min(o + 1, Math.max(0, card.comments.length - commentMaxHeight)));
       } else if ((key.upArrow || input === "k") && card?.comments) {
         setScrollOffset((o) => Math.max(0, o - 1));
       }
@@ -244,7 +249,7 @@ export function CardDetailView({ cardId, onClose }: Props) {
         </Text></Box>
         <CommentThread
           comments={card.comments.slice(scrollOffset)}
-          maxHeight={8}
+          maxHeight={commentMaxHeight}
         />
       </Box>
 
