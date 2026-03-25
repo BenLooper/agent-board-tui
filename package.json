@@ -2,9 +2,9 @@
   "name": "agent-board",
   "version": "1.0.0",
   "private": true,
-  "workspaces": ["server", "client"],
+  "workspaces": ["server", "tui"],
   "scripts": {
-    "dev": "concurrently --names \"server,client\" --prefix-colors \"cyan,magenta\" \"bun run --filter server dev\" \"bun run --filter client dev\"",
+    "dev": "concurrently --names \"server,tui\" --prefix-colors \"cyan,magenta\" \"bun run --filter server dev\" \"bun run --filter tui dev\"",
     "build": "bun run --filter '*' build",
     "install:all": "bun install"
   },
