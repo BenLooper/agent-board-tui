@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, API_BASE } from "../api/client";
 import type { QueueMessage, Conversation } from "../api/types";
@@ -10,13 +10,21 @@ import type { QueueMessage, Conversation } from "../api/types";
 interface ThreadWindowProps {
   agentId: string;
   leftOffset: number;
+  unread: number;
   onClose: () => void;
 }
 
-function ChatThreadWindow({ agentId, leftOffset, onClose }: ThreadWindowProps) {
+function ChatThreadWindow({ agentId, leftOffset, unread, onClose }: ThreadWindowProps) {
   const queryClient = useQueryClient();
   const [input, setInput] = useState("");
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const [collapsed, setCollapsed] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Fires every time the scroll container mounts (open, uncollapse, reopen)
+  const scrollRefCallback = useCallback((el: HTMLDivElement | null) => {
+    scrollRef.current = el;
+    if (el) setTimeout(() => { el.scrollTop = el.scrollHeight; }, 0);
+  }, []);
 
   const { data: messages = [] } = useQuery<QueueMessage[]>({
     queryKey: ["queue", agentId],
@@ -53,83 +61,98 @@ function ChatThreadWindow({ agentId, leftOffset, onClose }: ThreadWindowProps) {
     })();
   }, [agentId]);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
   return (
     <div
       className="fixed z-40 w-[320px] flex flex-col border border-b-0 border-[#2a2a38] rounded-t-lg overflow-hidden shadow-2xl"
-      style={{ bottom: 32, left: leftOffset, height: 380, background: "#1c1c28" }}
+      style={{ bottom: 32, left: leftOffset, height: collapsed ? "auto" : 380, background: "#1c1c28" }}
     >
-      {/* Header */}
+      {/* Header — click to collapse/expand, ✕ to close */}
       <div
-        className="flex items-center justify-between px-3 py-2.5 border-b border-[#2a2a38] shrink-0"
-        style={{ background: "#1c1c28" }}
+        className={`flex items-center justify-between px-3 py-2.5 border-b border-[#2a2a38] shrink-0 cursor-pointer select-none hover:bg-[#22222e] transition-colors ${
+          unread > 0 ? "chat-bar-glow" : ""
+        }`}
+        onClick={() => setCollapsed((v) => !v)}
       >
-        <span className="text-[11px] font-mono text-[#e2e8f0] truncate">{agentId}</span>
-        <button
-          className="ml-2 text-[11px] font-mono text-[#475569] hover:text-[#94a3b8] shrink-0"
-          onClick={onClose}
-        >
-          ✕
-        </button>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
-        {messages.length === 0 && (
-          <p className="text-[#475569] text-[11px] font-mono text-center mt-6">No messages yet.</p>
-        )}
-        {messages.map((msg) => {
-          const isUser = msg.author === "user";
-          return (
-            <div key={msg.id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-              <div
-                className={`max-w-[80%] rounded-2xl px-3 py-2 text-[12px] font-mono ${
-                  isUser ? "rounded-br-sm text-white" : "rounded-bl-sm text-[#e2e8f0]"
-                }`}
-                style={{ background: isUser ? "#2d6eb3" : "#2e2e3e" }}
-              >
-                {!isUser && (
-                  <p className="text-[10px] text-[#818cf8] mb-0.5">{msg.author}</p>
-                )}
-                <p className="whitespace-pre-wrap leading-relaxed">{msg.body}</p>
-                <p className={`text-[9px] opacity-40 mt-1 ${isUser ? "text-right" : "text-left"}`}>
-                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-        <div ref={bottomRef} />
-      </div>
-
-      {/* Compose */}
-      <div className="border-t border-[#2a2a38] px-3 py-2 shrink-0">
-        <textarea
-          className="w-full bg-[#12121f] border border-[#2a2a38] rounded-xl px-3 py-2 text-[12px] font-mono text-white placeholder-[#475569] focus:outline-none focus:border-[#6366f1] resize-none"
-          placeholder="Message..."
-          rows={2}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey && input.trim()) {
-              e.preventDefault();
-              sendMutation.mutate();
-            }
-          }}
-        />
-        <div className="flex justify-end mt-1.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-[11px] font-mono text-[#e2e8f0] truncate">{agentId}</span>
+          {unread > 0 && (
+            <span className="w-4 h-4 rounded-full bg-[#6366f1] text-white text-[9px] font-bold flex items-center justify-center shrink-0">
+              {unread}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0 ml-2">
+          <span className="text-[10px] font-mono text-[#334155]">{collapsed ? "▲" : "▼"}</span>
           <button
-            className="px-3 py-1 bg-[#6366f1] hover:bg-[#818cf8] text-white text-[10px] font-mono rounded disabled:opacity-40 transition-colors"
-            disabled={!input.trim() || sendMutation.isPending}
-            onClick={() => sendMutation.mutate()}
+            className="text-[11px] font-mono text-[#475569] hover:text-[#94a3b8]"
+            onClick={(e) => { e.stopPropagation(); onClose(); }}
           >
-            send
+            ✕
           </button>
         </div>
       </div>
+
+      {/* Messages + Compose — hidden when collapsed */}
+      {!collapsed && (
+        <>
+          <div ref={scrollRefCallback} className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
+            {messages.length === 0 && (
+              <p className="text-[#475569] text-[11px] font-mono text-center mt-6">No messages yet.</p>
+            )}
+            {messages.map((msg) => {
+              const isUser = msg.author === "user";
+              return (
+                <div key={msg.id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+                  <div
+                    className={`max-w-[80%] rounded-2xl px-3 py-2 text-[12px] font-mono ${
+                      isUser ? "rounded-br-sm text-white" : "rounded-bl-sm text-[#e2e8f0]"
+                    }`}
+                    style={{ background: isUser ? "#2d6eb3" : "#2e2e3e" }}
+                  >
+                    {!isUser && (
+                      <p className="text-[10px] text-[#818cf8] mb-0.5">{msg.author}</p>
+                    )}
+                    <p className="whitespace-pre-wrap leading-relaxed">{msg.body}</p>
+                    <p className={`text-[9px] opacity-40 mt-1 ${isUser ? "text-right" : "text-left"}`}>
+                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="border-t border-[#2a2a38] px-3 py-2 shrink-0">
+            <textarea
+              className="w-full bg-[#12121f] border border-[#2a2a38] rounded-xl px-3 py-2 text-[12px] font-mono text-white placeholder-[#475569] focus:outline-none focus:border-[#6366f1] resize-none"
+              placeholder="Message..."
+              rows={2}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey && input.trim()) {
+                  e.preventDefault();
+                  sendMutation.mutate();
+                }
+              }}
+            />
+            <div className="flex justify-end mt-1.5">
+              <button
+                className="px-3 py-1 bg-[#6366f1] hover:bg-[#818cf8] text-white text-[10px] font-mono rounded disabled:opacity-40 transition-colors"
+                disabled={!input.trim() || sendMutation.isPending}
+                onClick={() => sendMutation.mutate()}
+              >
+                send
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -167,20 +190,27 @@ export function ChatWidget() {
     setNewAgentKey("");
   };
 
+  // Only pulse the main bar for unread in threads that aren't open
+  const unreadInClosedThreads = conversations
+    .filter((c) => !openThreads.includes(c.agentId))
+    .reduce((sum, c) => sum + c.unread, 0);
   const totalUnread = conversations.reduce((sum, c) => sum + c.unread, 0);
-  const previewConvs = conversations.slice(0, 3);
 
   return (
     <>
       {/* Thread windows — positioned to the right of the main widget */}
-      {openThreads.map((agentId, index) => (
-        <ChatThreadWindow
-          key={agentId}
-          agentId={agentId}
-          leftOffset={450 + index * 330}
-          onClose={() => toggleThread(agentId)}
-        />
-      ))}
+      {openThreads.map((agentId, index) => {
+        const conv = conversations.find((c) => c.agentId === agentId);
+        return (
+          <ChatThreadWindow
+            key={agentId}
+            agentId={agentId}
+            leftOffset={450 + index * 330}
+            unread={conv?.unread ?? 0}
+            onClose={() => toggleThread(agentId)}
+          />
+        );
+      })}
 
       {/* Main widget */}
       <div className="fixed bottom-8 left-0 w-[440px] z-40">
@@ -190,17 +220,17 @@ export function ChatWidget() {
             className="flex flex-col border border-b-0 border-[#2a2a38] rounded-t-lg overflow-hidden shadow-2xl"
             style={{ maxHeight: 320, background: "#1c1c28" }}
           >
-            {/* Panel header */}
+            {/* Panel header — click to collapse */}
             <div
-              className="flex items-center justify-between px-4 py-2.5 border-b border-[#2a2a38] shrink-0"
-              style={{ background: "#1c1c28" }}
+              className="flex items-center justify-between px-4 py-2.5 border-b border-[#2a2a38] shrink-0 cursor-pointer hover:bg-[#22222e] transition-colors select-none"
+              onClick={() => setMainOpen(false)}
             >
               <span className="text-[10px] font-mono text-[#475569] uppercase tracking-wider">
                 Conversations
               </span>
               <button
                 className="text-[11px] font-mono text-[#6366f1] hover:text-[#818cf8] transition-colors"
-                onClick={() => setShowNewChat((v) => !v)}
+                onClick={(e) => { e.stopPropagation(); setShowNewChat((v) => !v); }}
               >
                 + new
               </button>
@@ -280,7 +310,7 @@ export function ChatWidget() {
         <button
           onClick={() => setMainOpen((v) => !v)}
           className={`w-full flex items-center gap-2.5 px-4 py-2 border border-b-0 border-[#2a2a38] rounded-t bg-[#0a0a0f] hover:bg-[#111118] transition-colors text-left ${
-            totalUnread > 0 && !mainOpen ? "chat-bar-glow" : ""
+            unreadInClosedThreads > 0 ? "chat-bar-glow" : ""
           }`}
         >
           <svg className="w-3.5 h-3.5 text-[#6366f1] shrink-0" fill="currentColor" viewBox="0 0 24 24">
@@ -297,34 +327,6 @@ export function ChatWidget() {
             </span>
           )}
 
-          <span className="text-[10px] font-mono text-[#2a2a38] shrink-0">|</span>
-
-          {conversations.length === 0 ? (
-            <span className="text-[10px] font-mono text-[#334155]">no conversations</span>
-          ) : (
-            <span className="flex gap-2 overflow-hidden min-w-0">
-              {previewConvs.map((c) => (
-                <span
-                  key={c.agentId}
-                  className={`text-[11px] font-mono truncate max-w-[90px] ${
-                    openThreads.includes(c.agentId)
-                      ? "text-[#818cf8]"
-                      : c.unread > 0
-                      ? "text-[#e2e8f0]"
-                      : "text-[#475569]"
-                  }`}
-                >
-                  {c.agentId}
-                  {c.unread > 0 && <span className="ml-0.5 text-[#6366f1]">●</span>}
-                </span>
-              ))}
-              {conversations.length > 3 && (
-                <span className="text-[10px] font-mono text-[#334155] shrink-0">
-                  +{conversations.length - 3}
-                </span>
-              )}
-            </span>
-          )}
 
           <span className="ml-auto text-[10px] font-mono text-[#334155] shrink-0">
             {mainOpen ? "▼" : "▲"}
