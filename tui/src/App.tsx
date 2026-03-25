@@ -45,6 +45,12 @@ function AppInner() {
       return;
     }
 
+    // Ctrl+R → restart TUI (signals wrapper script to relaunch)
+    if (key.ctrl && input === "r") {
+      process.exit(75);
+      return;
+    }
+
     // Ctrl+A → open admin from anywhere (except input-modal)
     if (key.ctrl && input === "a" && focusMode !== "input-modal") {
       setOpenCardId(null);

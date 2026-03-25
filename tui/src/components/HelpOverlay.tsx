@@ -29,6 +29,7 @@ export function HelpOverlay() {
         ["a", "Switch to Admin view"],
         ["Ctrl+A", "Open Admin from anywhere"],
         ["?", "Toggle this help screen"],
+        ["Ctrl+R", "Restart TUI (server keeps running)"],
         ["Ctrl+C", "Quit"],
       ],
     },

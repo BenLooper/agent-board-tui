@@ -56,7 +56,7 @@ export function Footer() {
         )}
       </Box>
       <Text color={theme.secondary} dimColor>
-        {hints[focusMode] ?? "b/c/a views  ? help  Ctrl+C quit"}
+        {hints[focusMode] ?? "b/c/a views  ? help  Ctrl+R restart  Ctrl+C quit"}
       </Text>
     </Box>
   );
