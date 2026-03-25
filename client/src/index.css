@@ -79,6 +79,26 @@ body {
   animation: comment-glow 2.5s ease-in-out infinite;
 }
 
+/* Chat bar glow — top and sides only, pulses on unread */
+@keyframes chat-bar-glow {
+  0%, 100% {
+    box-shadow:
+      0 -3px 8px rgba(99, 102, 241, 0.25),
+      3px 0 8px rgba(99, 102, 241, 0.15),
+      -3px 0 8px rgba(99, 102, 241, 0.15);
+  }
+  50% {
+    box-shadow:
+      0 -6px 16px rgba(99, 102, 241, 0.5),
+      6px 0 16px rgba(99, 102, 241, 0.35),
+      -6px 0 16px rgba(99, 102, 241, 0.35);
+  }
+}
+
+.chat-bar-glow {
+  animation: chat-bar-glow 2.5s ease-in-out infinite;
+}
+
 /* Countdown bar */
 @keyframes countdown {
   from { width: 100%; }

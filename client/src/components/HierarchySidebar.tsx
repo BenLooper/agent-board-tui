@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useBoardStore } from "../store";
-import { API_BASE } from "../api/client";
+import { api } from "../api/client";
 import type { Epic, Feature, Card } from "../api/types";
 
 export function HierarchySidebar() {
@@ -12,9 +12,8 @@ export function HierarchySidebar() {
   const { data: epics = [] } = useQuery<Epic[]>({
     queryKey: ["epics"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/epics`);
-      if (!res.ok) throw new Error("Failed to fetch epics");
-      return res.json();
+      const { data } = await api.api.epics.get();
+      return data ?? [];
     },
     staleTime: 30_000,
   });
@@ -22,9 +21,8 @@ export function HierarchySidebar() {
   const { data: features = [] } = useQuery<Feature[]>({
     queryKey: ["features"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/features`);
-      if (!res.ok) throw new Error("Failed to fetch features");
-      return res.json();
+      const { data } = await api.api.features.get();
+      return data ?? [];
     },
     staleTime: 30_000,
   });
@@ -32,9 +30,8 @@ export function HierarchySidebar() {
   const { data: cards = [] } = useQuery<Card[]>({
     queryKey: ["cards"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/cards`);
-      if (!res.ok) throw new Error("Failed to fetch cards");
-      return res.json();
+      const { data } = await api.api.cards.get();
+      return data ?? [];
     },
     staleTime: 5_000,
   });
@@ -76,7 +73,7 @@ export function HierarchySidebar() {
     <aside className="w-[220px] shrink-0 flex flex-col bg-[#0d0d14] border-r border-[#1e1e2a] overflow-y-auto">
       {/* Sidebar header */}
       <div className="px-3 py-2.5 border-b border-[#1e1e2a]">
-        <span className="text-[10px] font-mono text-[#475569] uppercase tracking-wider">
+        <span className="text-[12px] font-mono text-[#475569] uppercase tracking-wider">
           Hierarchy
         </span>
       </div>
@@ -133,7 +130,7 @@ export function HierarchySidebar() {
 
                 {/* Epic label */}
                 <span
-                  className="flex-1 text-[11px] font-mono truncate"
+                  className="flex-1 text-[13px] font-mono truncate"
                   onClick={() =>
                     setHierarchyFilter({ type: "epic", id: epic.id })
                   }
@@ -143,7 +140,7 @@ export function HierarchySidebar() {
 
                 {/* Count */}
                 <span
-                  className={`text-[10px] font-mono shrink-0 px-1 rounded ${
+                  className={`text-[11px] font-mono shrink-0 px-1 rounded ${
                     isActive({ type: "epic", id: epic.id })
                       ? "text-[#6366f1] bg-[#1a1a30]"
                       : "text-[#475569] bg-[#1a1a24]"
@@ -169,7 +166,7 @@ export function HierarchySidebar() {
                 ))}
 
               {expanded && epicFeatures.length === 0 && (
-                <div className="pl-10 py-1 text-[10px] font-mono text-[#334155]">
+                <div className="pl-10 py-1 text-[12px] font-mono text-[#334155]">
                   no features
                 </div>
               )}
@@ -178,7 +175,7 @@ export function HierarchySidebar() {
         })}
 
         {epics.length === 0 && (
-          <div className="px-3 py-2 text-[10px] font-mono text-[#334155]">
+          <div className="px-3 py-2 text-[12px] font-mono text-[#334155]">
             no epics
           </div>
         )}
@@ -224,9 +221,9 @@ function SidebarItem({ label, count, active, onClick, indent, muted }: SidebarIt
       }`}
       style={{ paddingLeft }}
     >
-      <span className="flex-1 text-[11px] font-mono truncate">{label}</span>
+      <span className="flex-1 text-[13px] font-mono truncate">{label}</span>
       <span
-        className={`text-[10px] font-mono shrink-0 px-1 rounded mr-2 ${
+        className={`text-[11px] font-mono shrink-0 px-1 rounded mr-2 ${
           active
             ? "text-[#6366f1] bg-[#1a1a30]"
             : "text-[#475569] bg-[#1a1a24]"

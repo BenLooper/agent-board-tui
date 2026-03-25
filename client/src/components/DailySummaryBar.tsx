@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { API_BASE } from "../api/client";
+import { api } from "../api/client";
 import type { Card, Epic, Feature } from "../api/types";
 
 function dateKey(offsetDays = 0): string {
@@ -27,9 +27,8 @@ export function DailySummaryBar() {
   const { data: allCards = [] } = useQuery<Card[]>({
     queryKey: ["cards"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/cards`);
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      const { data } = await api.api.cards.get();
+      return data ?? [];
     },
     staleTime: 5_000,
   });
@@ -37,9 +36,8 @@ export function DailySummaryBar() {
   const { data: epics = [] } = useQuery<Epic[]>({
     queryKey: ["epics"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/epics`);
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      const { data } = await api.api.epics.get();
+      return data ?? [];
     },
     staleTime: 30_000,
   });
@@ -47,15 +45,14 @@ export function DailySummaryBar() {
   const { data: features = [] } = useQuery<Feature[]>({
     queryKey: ["features"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/features`);
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      const { data } = await api.api.features.get();
+      return data ?? [];
     },
     staleTime: 30_000,
   });
 
   const completedOnDay = allCards.filter(
-    (c) => c.completedAt && c.completedAt.startsWith(targetDate)
+    (c) => typeof c.completedAt === "string" && c.completedAt.startsWith(targetDate)
   );
 
   const epicLabel = (card: Card) => {

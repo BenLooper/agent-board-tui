@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { API_BASE } from "../../api/client";
+import { api } from "../../api/client";
 import type { Card, Epic, Feature } from "../../api/types";
 
 export function MoveSection() {
@@ -15,9 +15,8 @@ export function MoveSection() {
   const { data: cards = [] } = useQuery<Card[]>({
     queryKey: ["cards"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/cards`);
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      const { data } = await api.api.cards.get();
+      return data ?? [];
     },
     staleTime: 5_000,
   });
@@ -25,9 +24,8 @@ export function MoveSection() {
   const { data: epics = [] } = useQuery<Epic[]>({
     queryKey: ["epics"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/epics`);
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      const { data } = await api.api.epics.get();
+      return data ?? [];
     },
     staleTime: 30_000,
   });
@@ -35,9 +33,8 @@ export function MoveSection() {
   const { data: features = [] } = useQuery<Feature[]>({
     queryKey: ["features"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/features`);
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      const { data } = await api.api.features.get();
+      return data ?? [];
     },
     staleTime: 30_000,
   });
@@ -69,13 +66,9 @@ export function MoveSection() {
     if (!selectedCardId) return;
     setSaving(true);
     try {
-      await fetch(`${API_BASE}/cards/${selectedCardId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          epicId: targetEpicId || null,
-          featureId: targetFeatureId || null,
-        }),
+      await api.api.cards({ id: selectedCardId }).patch({
+        epicId: targetEpicId || null,
+        featureId: targetFeatureId || null,
       });
       queryClient.invalidateQueries({ queryKey: ["cards"] });
       setSavedId(selectedCardId);

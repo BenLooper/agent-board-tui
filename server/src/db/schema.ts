@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
 // ---------------------------------------------------------------------------
@@ -126,6 +126,22 @@ export const transitionRules = sqliteTable("transition_rules", {
 
 export type TransitionRule = typeof transitionRules.$inferSelect;
 export type InsertTransitionRule = typeof transitionRules.$inferInsert;
+
+// ---------------------------------------------------------------------------
+// queue_messages
+// ---------------------------------------------------------------------------
+export const queueMessages = sqliteTable("queue_messages", {
+  id: text("id").primaryKey(),
+  agentId: text("agent_id").notNull(),
+  body: text("body").notNull(),
+  status: text("status").notNull().default("pending"), // "pending" | "read"
+  author: text("author").notNull().default("user"),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  readAt: text("read_at"),
+});
+
+export type QueueMessage = typeof queueMessages.$inferSelect;
+export type InsertQueueMessage = typeof queueMessages.$inferInsert;
 
 // ---------------------------------------------------------------------------
 // Type exports

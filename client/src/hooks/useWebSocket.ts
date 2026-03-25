@@ -121,6 +121,12 @@ export function useWebSocket() {
         case "feature:updated":
           queryClient.invalidateQueries({ queryKey: ["features"] });
           break;
+
+        case "queue:created":
+        case "queue:read":
+        case "queue:deleted":
+          queryClient.invalidateQueries({ queryKey: ["queue"] });
+          break;
       }
     },
     [queryClient] // stable — store actions come from storeRef

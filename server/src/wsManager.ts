@@ -21,7 +21,10 @@ export type WsEvent =
   | "epic:deleted"
   | "feature:created"
   | "feature:updated"
-  | "feature:deleted";
+  | "feature:deleted"
+  | "queue:created"
+  | "queue:read"
+  | "queue:deleted";
 
 export interface WsMessage {
   event: WsEvent;

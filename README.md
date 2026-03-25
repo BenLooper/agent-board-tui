@@ -1,17 +1,17 @@
 # agent-board
 
-A full-stack local task board for monitoring and coordinating AI agents. Agents can create cards, post progress updates, move work through statuses, and — most importantly — pause and ask you a question directly in the UI when they need human input.
+A full-stack local task board for monitoring and coordinating AI agents. Agents create cards, post progress, move work through statuses, and pause to ask you questions directly in the UI. You can message agents between turns via the built-in chat system, and everything updates in real time over WebSocket.
 
 ---
 
 ## Setup
 
 ```bash
-# Install dependencies (server + client)
+# Install dependencies
 cd server && bun install
 cd ../client && bun install
 
-# Start both
+# Start both (in separate terminals)
 cd server && bun run dev
 cd ../client && bun run dev
 ```
@@ -19,26 +19,28 @@ cd ../client && bun run dev
 - **API** — `http://localhost:31377`
 - **UI** — `http://localhost:5173`
 
-The database is created automatically at `data/agent-board.db` on first run. Default statuses (To Do, In Progress, In Review, Needs Revision, Blocked, Done) are seeded on first startup.
+The database is created automatically at `server/data/agent-board.db` on first run. Default statuses (To Do, In Progress, In Review, Needs Revision, Blocked, Done) are seeded on first startup.
 
 ---
 
 ## What it does
 
 ### For you
-- A Kanban board showing all active agent work in real time
+- A Kanban board showing all active agent work in real time via WebSocket
 - Audio + browser notifications when an agent needs your input
 - An input modal where you answer agent questions (yes/no, multiple choice, free text)
+- A **chat widget** (bottom-left docked bar) to message agents and read their replies — with unread badges and per-conversation thread windows
 - A hierarchy sidebar to filter cards by epic or feature
-- A daily summary bar showing what was completed today
+- A **daily summary bar** showing what was completed today, with day navigation to browse past completions
 - An admin panel to manage statuses, epics, features, cards, and transition rules
 
 ### For agents
 - Create and update cards to represent their work
-- Post comments to narrate progress
-- Claim cards to take ownership
+- Post comments to narrate progress — the user reads these
+- Claim cards to take ownership and auto-advance to In Progress
 - Check which status transitions are permitted before moving a card
 - Block execution and request user input — the HTTP call long-polls until you answer
+- Check for and reply to user messages via the queue/chat API at the start of each turn
 
 ---
 
@@ -57,63 +59,51 @@ See the API reference below for how to use it.
 </agent_api>
 ```
 
-That's all an agent needs. It can then create cards, post comments, update statuses, and request input from you using plain HTTP calls.
+That's all an agent needs. It can create cards, post comments, update statuses, request input, and send/receive chat messages using plain HTTP calls.
 
 ### Claude Code agents — use the slash command skills
 
-`.claude/commands/` contains Claude Code slash command skills. In any Claude Code session:
+`.claude/commands/` contains Claude Code slash command skills:
 
 ```
-/board-create-card    Build the login page — task, assign to frontend-agent
-/board-update-card    abc-123 set status to In Review
-/board-complete-card  abc-123 All tests passing, PR merged
-/board-block-card     abc-123 Waiting for API keys from the infra team
-/board-request-input  abc-123 Should I overwrite the existing config?
-/board-add-comment    abc-123 Found 3 failing tests, investigating now
-/board-list-cards     Blocked
-/board-get-card       abc-123
-/board-create-epic    Authentication Overhaul — replace session tokens with JWTs
-/board-create-feature epic-456 JWT Issuance — token signing and refresh flow
-```
-
-### TypeScript agents — use the agent-client
-
-`agent-client/index.ts` is a typed HTTP wrapper for agents running as Bun/Node processes:
-
-```ts
-import { createCard, requestInput, addComment, updateCard } from "../agent-client/index.ts";
-
-const card = await createCard({ title: "Refactor auth module", agentId: "my-agent" });
-
-const answers = await requestInput(card.id, [
-  { id: "confirm", type: "yesno", prompt: "Proceed with the breaking migration?" },
-  { id: "strategy", type: "choice", prompt: "Which strategy?", options: ["rolling", "big-bang"] },
-]);
-
-await addComment(card.id, `Using strategy: ${answers.strategy}`);
-await updateCard(card.id, { status: "Done" });
-```
-
-Set `AGENT_BOARD_URL` to point to a non-localhost board:
-```bash
-AGENT_BOARD_URL=http://192.168.1.10:31377 bun run my-agent.ts
+/board-create-card      Build the login page — task, assign to frontend-agent
+/board-update-card      abc-123 set status to In Review
+/board-complete-card    abc-123 All tests passing, PR merged
+/board-block-card       abc-123 Waiting for API keys from the infra team
+/board-request-input    abc-123 Should I overwrite the existing config?
+/board-add-comment      abc-123 Found 3 failing tests, investigating now
+/board-list-cards       Blocked
+/board-get-card         abc-123
+/board-create-epic      Authentication Overhaul — replace session tokens with JWTs
+/board-create-feature   epic-456 JWT Issuance — token signing and refresh flow
+/board-check-messages   implementer-1
+/board-send-message     implementer-1 Please prioritize the auth bug next
 ```
 
 ---
 
 ## Requesting user input
 
-This is the most valuable feature. When an agent hits a decision it can't make alone, it calls `POST /api/input` with a list of questions. The HTTP request **blocks** — it stays open until you answer in the UI. Your card moves to Blocked automatically while waiting.
+When an agent hits a decision it can't make alone, it calls `POST /api/input` with a list of questions. The HTTP request **blocks** — it stays open until you answer in the UI. The card moves to Blocked automatically while waiting.
 
-The UI surfaces an audio alert and a floating notification. You click it, answer the questions, and the agent's execution resumes with your answers.
+The UI surfaces an audio alert and a floating notification. You click it, answer the questions (yes/no, multiple choice, or free text), and the agent's execution resumes with your answers immediately.
 
-**Always include `AGENT_API.md` in agent instructions.** The more agents use this endpoint, the more useful the board becomes as a coordination layer.
+---
+
+## Agent chat
+
+The chat widget (bottom-left docked bar) lets you exchange messages with any agent between turns.
+
+- **Fuzzy matching** — a message addressed to `"implementer"` is delivered to any agent whose id contains `"implementer"` as a substring (e.g. `implementer-1`, `implementer-frontend`).
+- **Unread badges** — the bar glows and shows a badge count when you have unread agent replies.
+- **Thread windows** — clicking a conversation opens a floating thread window. Multiple conversations can be open simultaneously, stacked to the right.
+- **Agents should poll** `GET /api/queue?agentId=<id>&status=pending` at the start of each turn before doing any work.
 
 ---
 
 ## Transition rules
 
-The admin panel has a **Rules** tab where you configure which agents can move cards to which statuses. Rules match agents by pattern (e.g. `implementer*`) and optionally restrict which status a card must be in before the move is allowed.
+The admin panel has a **Rules** tab where you configure which agents can move cards to which statuses. Rules match agents by glob pattern (e.g. `implementer*`) and optionally restrict which status a card must be in before the move is allowed.
 
 If no rules are configured, all moves are permitted. Rules only apply when a card is moved with an `agentId` — admin moves through the UI are always allowed.
 
@@ -127,35 +117,45 @@ Agents should call `GET /api/cards/:id/allowed-statuses?agentId=<id>` before pat
 agent-board/
 ├── server/                  # Bun + Elysia API
 │   └── src/
-│       ├── index.ts         # Server entry, route mounting, WebSocket
+│       ├── app.ts           # Elysia app builder, route mounting, exports App type
+│       ├── index.ts         # Entry point — calls app.listen()
 │       ├── db/
 │       │   ├── index.ts     # DB init, migrations, seeding
 │       │   └── schema.ts    # Drizzle table definitions + inferred types
 │       ├── routes/          # One file per resource
-│       │   ├── cards.ts
+│       │   ├── cards.ts     # CRUD, claim, comments, allowed-statuses
 │       │   ├── statuses.ts
 │       │   ├── epics.ts
 │       │   ├── features.ts
-│       │   ├── input.ts
+│       │   ├── input.ts     # Long-poll user input
+│       │   ├── queue.ts     # Agent chat / message queue
 │       │   └── transitionRules.ts
+│       ├── types.ts         # Re-exports App type for client path alias
 │       ├── wsManager.ts     # WebSocket client registry + broadcast
 │       └── pollRegistry.ts  # Long-poll promise parking
 │
 ├── client/                  # React + Vite frontend
 │   └── src/
 │       ├── components/
-│       │   ├── admin/       # Admin panel sections (one file each)
-│       │   └── ...          # Board, cards, modals, sidebar, etc.
+│       │   ├── App.tsx
+│       │   ├── Board.tsx
+│       │   ├── ChatWidget.tsx       # Docked chat bar + thread windows
+│       │   ├── DailySummaryBar.tsx  # Footer bar — completed cards by day
+│       │   ├── Header.tsx
+│       │   ├── HierarchySidebar.tsx
+│       │   ├── CardModal.tsx
+│       │   ├── InputModal.tsx
+│       │   ├── InputNotificationBanner.tsx
+│       │   ├── AdminPanel.tsx
+│       │   ├── NotificationPrompt.tsx
+│       │   └── admin/              # Admin panel sections (one file each)
 │       ├── hooks/
 │       │   └── useWebSocket.ts
 │       ├── store/
-│       │   └── index.ts     # Zustand store
+│       │   └── index.ts            # Zustand store
 │       └── api/
-│           ├── client.ts    # Base URL + Eden treaty setup
-│           └── types.ts     # Shared TypeScript types
-│
-├── agent-client/
-│   └── index.ts             # Typed HTTP client for TS/Bun agents
+│           ├── client.ts           # Eden treaty typed client + base URLs
+│           └── types.ts            # Shared TypeScript types
 │
 ├── data/                    # SQLite database (gitignored)
 ├── docs/                    # Stack explainers
@@ -165,7 +165,7 @@ agent-board/
 │   ├── TANSTACK_QUERY.md
 │   └── ZUSTAND.md
 │
-├── .claude/commands/        # Claude Code slash command skills
+├── .claude/commands/        # Claude Code slash command skills (12 total)
 ├── AGENT_API.md             # HTTP reference for agents
 └── README.md
 ```
@@ -178,6 +178,7 @@ agent-board/
 |-------|-----------|
 | Runtime | [Bun](docs/BUN.md) |
 | API framework | [Elysia](docs/ELYSIA.md) |
+| Typed API client | Eden Treaty (`@elysiajs/eden`) |
 | Database | SQLite via `bun:sqlite`, WAL mode |
 | ORM | [Drizzle](docs/DRIZZLE.md) |
 | Frontend | React 19 + TypeScript + Vite + Tailwind v4 |
@@ -185,14 +186,18 @@ agent-board/
 | UI state | [Zustand](docs/ZUSTAND.md) |
 | Real-time | Native WebSocket (Elysia WS) |
 
-See `docs/` for plain-English explainers on each piece.
-
 ---
 
 ## How it works — brief technical notes
 
+**Eden Treaty** — the client uses `treaty<App>("localhost:31377")` which derives a fully typed API client directly from Elysia's `App` type. All HTTP calls go through the typed client (`api.api.cards.get()`, etc.) rather than raw fetch, giving end-to-end type safety from the database schema to the UI.
+
 **Real-time updates** — every mutation broadcasts a WebSocket event immediately after the DB write. The client's `useWebSocket` hook invalidates the relevant TanStack Query caches on each event, so the UI updates within milliseconds without polling.
 
-**Long-poll input** — `POST /api/input` parks a Promise in `pollRegistry` (a `Map` of resolve/reject callbacks). The route handler `await`s it, suspending without blocking the event loop. When you submit answers, `POST /api/input/:id/answer` resolves the Promise and the original request returns. Timeout after 900 seconds by default.
+**Long-poll input** — `POST /api/input` parks a Promise in `pollRegistry` (a `Map` of resolve/reject callbacks). The route handler `await`s it, suspending without blocking the event loop. When you submit answers, `POST /api/input/:id/answer` resolves the Promise and the original request returns.
+
+**Agent chat** — `GET /queue?agentId=X` uses a SQLite `LIKE '%' || lower(X) || '%'` query for fuzzy substring matching. Messages are ordered by `createdAt` ascending. Unread count for the chat bar badge only counts messages from agents (`author != 'user'`) with `status = 'pending'`.
 
 **Migrations** — no migration runner. `initDb()` runs `CREATE TABLE IF NOT EXISTS` on every startup. New columns are added with `ALTER TABLE ... ADD COLUMN` in a try/catch (no-op if already present).
+
+**Server split** — `app.ts` builds and exports the Elysia app (and the `App` type used by Eden Treaty). `index.ts` is the entry point that calls `.listen()`. This split is necessary so the client can import the `App` type without pulling in Bun's runtime modules.

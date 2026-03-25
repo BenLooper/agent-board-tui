@@ -82,6 +82,23 @@ export interface TransitionRule {
   createdAt: string;
 }
 
+export interface QueueMessage {
+  id: string;
+  agentId: string;
+  body: string;
+  status: "pending" | "read";
+  author: string;
+  createdAt: string;
+  readAt: string | null;
+}
+
+export interface Conversation {
+  agentId: string;
+  total: number;
+  unread: number;
+  lastAt: string;
+}
+
 export type WsEvent =
   | "card:created"
   | "card:updated"
@@ -98,7 +115,10 @@ export type WsEvent =
   | "epic:deleted"
   | "feature:created"
   | "feature:updated"
-  | "feature:deleted";
+  | "feature:deleted"
+  | "queue:created"
+  | "queue:read"
+  | "queue:deleted";
 
 export interface WsMessage {
   event: WsEvent;

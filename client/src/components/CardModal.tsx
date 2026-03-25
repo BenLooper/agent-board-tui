@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBoardStore } from "../store";
-import { API_BASE } from "../api/client";
+import { api } from "../api/client";
 import type { CardWithComments, Status } from "../api/types";
 import { TypeBadge } from "./TypeBadge";
 
@@ -22,22 +22,16 @@ export function CardModal({ statuses }: Props) {
   const { data: card, isLoading } = useQuery<CardWithComments>({
     queryKey: ["card", selectedCardId],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/cards/${selectedCardId}`);
-      if (!res.ok) throw new Error("Failed to fetch card");
-      return res.json();
+      const { data } = await api.api.cards({ id: selectedCardId! }).get();
+      return data!;
     },
     enabled: !!selectedCardId,
   });
 
   const updateStatusMutation = useMutation({
     mutationFn: async (statusId: string) => {
-      const res = await fetch(`${API_BASE}/cards/${selectedCardId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ statusId }),
-      });
-      if (!res.ok) throw new Error("Failed to update status");
-      return res.json();
+      const { data } = await api.api.cards({ id: selectedCardId! }).patch({ statusId });
+      return data!;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cards"] });
@@ -47,10 +41,7 @@ export function CardModal({ statuses }: Props) {
 
   const deleteCardMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`${API_BASE}/cards/${selectedCardId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to delete card");
+      await api.api.cards({ id: selectedCardId! }).delete();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cards"] });
@@ -60,13 +51,8 @@ export function CardModal({ statuses }: Props) {
 
   const addCommentMutation = useMutation({
     mutationFn: async (body: string) => {
-      const res = await fetch(`${API_BASE}/cards/${selectedCardId}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body, author: "user" }),
-      });
-      if (!res.ok) throw new Error("Failed to add comment");
-      return res.json();
+      const { data } = await api.api.cards({ id: selectedCardId! }).comments.post({ body, author: "user" });
+      return data!;
     },
     onSuccess: () => {
       setCommentBody("");

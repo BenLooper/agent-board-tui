@@ -1,7 +1,7 @@
 import Elysia, { t } from "elysia";
 import { db } from "../db";
 import { inputRequests, cards, statuses } from "../db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { wsManager } from "../wsManager";
 import { pollRegistry } from "../pollRegistry";

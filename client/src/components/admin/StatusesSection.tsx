@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { API_BASE } from "../../api/client";
+import { api } from "../../api/client";
 import type { Card, Status } from "../../api/types";
 
 export function StatusesSection() {
@@ -15,9 +15,8 @@ export function StatusesSection() {
   const { data: statuses = [] } = useQuery<Status[]>({
     queryKey: ["statuses"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/statuses`);
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      const { data } = await api.api.statuses.get();
+      return data ?? [];
     },
     staleTime: 30_000,
   });
@@ -25,22 +24,16 @@ export function StatusesSection() {
   const { data: cards = [] } = useQuery<Card[]>({
     queryKey: ["cards"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/cards`);
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      const { data } = await api.api.cards.get();
+      return data ?? [];
     },
     staleTime: 5_000,
   });
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`${API_BASE}/statuses`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName.trim(), color: newColor }),
-      });
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      const { data } = await api.api.statuses.post({ name: newName.trim(), color: newColor });
+      return data!;
     },
     onSuccess: () => {
       setNewName("");
@@ -51,13 +44,8 @@ export function StatusesSection() {
 
   const saveMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`${API_BASE}/statuses/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editName.trim(), color: editColor }),
-      });
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      const { data } = await api.api.statuses({ id }).patch({ name: editName.trim(), color: editColor });
+      return data!;
     },
     onSuccess: () => {
       setEditingId(null);
@@ -68,15 +56,15 @@ export function StatusesSection() {
   const reorderMutation = useMutation({
     mutationFn: async ({ id, newPosition, swapId, swapPosition }: { id: string; newPosition: number; swapId: string; swapPosition: number }) => {
       await Promise.all([
-        fetch(`${API_BASE}/statuses/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ position: newPosition }) }),
-        fetch(`${API_BASE}/statuses/${swapId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ position: swapPosition }) }),
+        api.api.statuses({ id }).patch({ position: newPosition }),
+        api.api.statuses({ id: swapId }).patch({ position: swapPosition }),
       ]);
     },
     // No onSuccess invalidation — WS status:updated events handle cache refresh (debounced)
   });
 
   const deleteStatus = async (id: string) => {
-    await fetch(`${API_BASE}/statuses/${id}`, { method: "DELETE" });
+    await api.api.statuses({ id }).delete();
     queryClient.invalidateQueries({ queryKey: ["statuses"] });
     setDeletingId(null);
   };

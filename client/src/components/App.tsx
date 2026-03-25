@@ -10,7 +10,8 @@ import { HierarchySidebar } from "./HierarchySidebar";
 import { AdminPanel } from "./AdminPanel";
 import { NotificationPrompt } from "./NotificationPrompt";
 import { DailySummaryBar } from "./DailySummaryBar";
-import { API_BASE } from "../api/client";
+import { ChatWidget } from "./ChatWidget";
+import { api } from "../api/client";
 import type { Status, InputRequest } from "../api/types";
 
 export function App() {
@@ -26,9 +27,8 @@ export function App() {
   const { data: statuses = [] } = useQuery<Status[]>({
     queryKey: ["statuses"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/statuses`);
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      const { data } = await api.api.statuses.get();
+      return data ?? [];
     },
     staleTime: 30_000,
   });
@@ -37,16 +37,15 @@ export function App() {
   useQuery<InputRequest[]>({
     queryKey: ["input", "pending"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/input/pending`);
-      if (!res.ok) throw new Error("Failed");
-      const data: InputRequest[] = await res.json();
+      const { data } = await api.api.input.pending.get();
+      const requests: InputRequest[] = (data as InputRequest[]) ?? [];
       // Hydrate the store
       const store = useBoardStore.getState();
-      for (const req of data) {
+      for (const req of requests) {
         store.addPendingInputRequest(req);
         store.addPulsingCard(req.cardId);
       }
-      return data;
+      return requests;
     },
     staleTime: Infinity,
     refetchOnWindowFocus: false,
@@ -86,6 +85,9 @@ export function App() {
 
       {/* Notification permission prompt */}
       <NotificationPrompt />
+
+      {/* Agent chat — fixed above daily summary bar */}
+      <ChatWidget />
     </div>
   );
 }

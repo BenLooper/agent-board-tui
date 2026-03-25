@@ -2,7 +2,6 @@ import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import * as schema from "./schema";
 import { statuses } from "./schema";
-import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { join } from "path";
 import { mkdirSync } from "fs";
@@ -115,6 +114,24 @@ export function initDb() {
   } catch {
     // already exists
   }
+
+  // Create queue_messages table if not present
+  try {
+    sqlite.run(`CREATE TABLE IF NOT EXISTS queue_messages (
+      id TEXT PRIMARY KEY,
+      agent_id TEXT NOT NULL,
+      body TEXT NOT NULL,
+      importance TEXT NOT NULL DEFAULT 'medium',
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      read_at TEXT
+    )`);
+  } catch {}
+
+  // Migrate: add author column to queue_messages if not present
+  try {
+    sqlite.run(`ALTER TABLE queue_messages ADD COLUMN author TEXT NOT NULL DEFAULT 'user'`);
+  } catch {}
 
   // Seed statuses if empty
   const existing = db.select().from(statuses).all();

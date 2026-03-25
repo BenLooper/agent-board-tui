@@ -11,7 +11,8 @@ This board is the shared workspace between you and the user. Use it to track you
 1. **Claim a card** when you pick up a task — this sets you as the owner and moves it to In Progress.
 2. **Post comments** on the card as you work. This is how the user follows along.
 3. **Ask for input** using the long-poll endpoint whenever you need a decision, approval, or information. The request surfaces in the UI with an audio alert. **Do not proceed past a blocking question — wait for the answer.**
-4. **Update the status** when you finish or hit a wall.
+4. **Check your messages** at the start of each turn — the user may have left you a message via the chat system.
+5. **Update the status** when you finish or hit a wall.
 
 ---
 
@@ -151,6 +152,72 @@ On timeout (HTTP 408):
 
 ---
 
+## Agent Chat (Message Queue)
+
+The board has a bidirectional chat system. The user can send you messages between turns and expects you to read them before doing any work. You can also send replies that appear in the user's chat window.
+
+### Fuzzy agent matching
+
+Messages use a fuzzy pattern match — the message's `agentId` is matched as a substring of your agent id. This means a message addressed to `"implementer"` will be picked up by `"implementer-1"`, `"implementer-frontend"`, or `"implementer"` itself.
+
+Always poll using your **full** agent id:
+```
+GET /queue?agentId=implementer-1&status=pending
+```
+
+### Check your messages (do this at the start of each turn)
+```
+GET /queue?agentId=<your-agent-id>&status=pending
+```
+Returns pending messages addressed to you (via fuzzy match), ordered oldest first. Filter for `status=pending` to only get unread messages.
+
+### Reply to a message / send a message
+```
+POST /queue
+{
+  "agentId": "implementer-1",
+  "body": "Done — the migration is complete. No data loss.",
+  "author": "implementer-1"
+}
+```
+Set `author` to your own agent id so the user's chat window shows it as a reply from you. The `agentId` field identifies which conversation thread this belongs to.
+
+### Mark a message as read
+```
+POST /queue/:id/read
+```
+Call this after you have processed a message.
+
+### List all conversations
+```
+GET /queue/conversations
+```
+Returns a summary per agent: `{ agentId, total, unread, lastAt }`.
+
+### QueueMessage shape
+```json
+{
+  "id": "uuid",
+  "agentId": "implementer",
+  "body": "Please prioritize the login bug fix next.",
+  "status": "pending",
+  "author": "user",
+  "createdAt": "2026-03-24T10:00:00.000Z",
+  "readAt": null
+}
+```
+
+**`author` field:** `"user"` means the human sent it. Any other value is the agent id of the sender.
+
+**Recommended per-turn workflow:**
+1. At the start of each turn, call `GET /queue?agentId=<your-id>&status=pending`.
+2. Read the messages and adjust your plan accordingly.
+3. Reply with `POST /queue` (set `author` to your agent id) if a response is warranted.
+4. Call `POST /queue/:id/read` for each message you act on.
+5. Note any changes to your plan in a comment on the relevant card.
+
+---
+
 ## Statuses
 
 ### List all statuses (ordered by position)
@@ -231,3 +298,4 @@ Returns `[{ id, agentPattern, fromStatusId, toStatusId }]`. `null` means "any".
 - Use `GET /cards/:id/allowed-statuses?agentId=<you>` before changing status — it tells you exactly what moves are available to you.
 - When in doubt about anything, use `POST /input`. The user prefers being asked over having you guess.
 - `timeoutSecs` defaults to 900 (15 min). For non-urgent questions you can increase it; for quick confirmations leave it at default.
+- Check `GET /queue?agentId=<you>&status=pending` at the start of each turn before doing any other work.

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { API_BASE } from "../../api/client";
+import { api } from "../../api/client";
 import type { Card, Status } from "../../api/types";
 
 export function CardsSection() {
@@ -15,9 +15,8 @@ export function CardsSection() {
   const { data: cards = [] } = useQuery<Card[]>({
     queryKey: ["cards"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/cards`);
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      const { data } = await api.api.cards.get();
+      return data ?? [];
     },
     staleTime: 5_000,
   });
@@ -25,9 +24,8 @@ export function CardsSection() {
   const { data: statuses = [] } = useQuery<Status[]>({
     queryKey: ["statuses"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/statuses`);
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      const { data } = await api.api.statuses.get();
+      return data ?? [];
     },
     staleTime: 30_000,
   });
@@ -42,10 +40,7 @@ export function CardsSection() {
   const deleteCard = async (cardId: string) => {
     setDeletingIds((prev) => new Set(prev).add(cardId));
     try {
-      const res = await fetch(`${API_BASE}/cards/${cardId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to delete");
+      await api.api.cards({ id: cardId }).delete();
       queryClient.invalidateQueries({ queryKey: ["cards"] });
     } finally {
       setDeletingIds((prev) => {

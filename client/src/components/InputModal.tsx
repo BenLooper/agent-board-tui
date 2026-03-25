@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBoardStore } from "../store";
-import { API_BASE } from "../api/client";
+import { API_BASE } from "../api/client"; // kept: /api/input/:id/answer uses raw fetch (long-poll adjacent)
 import type { InputRequest, Question } from "../api/types";
 import { useCountdown } from "../hooks/useCountdown";
 

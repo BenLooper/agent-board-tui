@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { API_BASE } from "../../api/client";
+import { api } from "../../api/client";
 import type { Card } from "../../api/types";
 
 export function DangerSection() {
@@ -11,9 +11,8 @@ export function DangerSection() {
   const { data: cards = [] } = useQuery<Card[]>({
     queryKey: ["cards"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/cards`);
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      const { data } = await api.api.cards.get();
+      return data ?? [];
     },
     staleTime: 5_000,
   });
@@ -22,7 +21,7 @@ export function DangerSection() {
     setIsDeleting(true);
     try {
       for (const card of cards) {
-        await fetch(`${API_BASE}/cards/${card.id}`, { method: "DELETE" });
+        await api.api.cards({ id: card.id }).delete();
       }
       queryClient.invalidateQueries({ queryKey: ["cards"] });
     } finally {

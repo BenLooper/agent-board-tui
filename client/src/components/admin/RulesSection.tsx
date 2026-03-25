@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { API_BASE } from "../../api/client";
+import { api } from "../../api/client";
 import type { Status, TransitionRule } from "../../api/types";
 
 export function RulesSection() {
@@ -12,9 +12,8 @@ export function RulesSection() {
   const { data: rules = [] } = useQuery<TransitionRule[]>({
     queryKey: ["transition-rules"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/transition-rules`);
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      const { data } = await api.api["transition-rules"].get();
+      return data ?? [];
     },
     staleTime: 10_000,
   });
@@ -22,9 +21,8 @@ export function RulesSection() {
   const { data: statuses = [] } = useQuery<Status[]>({
     queryKey: ["statuses"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/statuses`);
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      const { data } = await api.api.statuses.get();
+      return data ?? [];
     },
     staleTime: 30_000,
   });
@@ -33,17 +31,12 @@ export function RulesSection() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`${API_BASE}/transition-rules`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          agentPattern: agentPattern.trim() || null,
-          fromStatusId: fromStatusId || null,
-          toStatusId,
-        }),
+      const { data } = await api.api["transition-rules"].post({
+        agentPattern: agentPattern.trim() || null,
+        fromStatusId: fromStatusId || null,
+        toStatusId,
       });
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      return data!;
     },
     onSuccess: () => {
       setAgentPattern("");
@@ -55,7 +48,7 @@ export function RulesSection() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await fetch(`${API_BASE}/transition-rules/${id}`, { method: "DELETE" });
+      await api.api["transition-rules"]({ id }).delete();
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["transition-rules"] }),
   });

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useBoardStore } from "../store";
-import { API_BASE } from "../api/client";
+import { api } from "../api/client";
 import type { Card, Status } from "../api/types";
 import { KanbanColumn } from "./KanbanColumn";
 
@@ -10,9 +10,8 @@ export function Board() {
   const { data: statuses = [], isLoading: statusesLoading } = useQuery<Status[]>({
     queryKey: ["statuses"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/statuses`);
-      if (!res.ok) throw new Error("Failed to fetch statuses");
-      return res.json();
+      const { data } = await api.api.statuses.get();
+      return data ?? [];
     },
     staleTime: 30_000,
   });
@@ -20,9 +19,8 @@ export function Board() {
   const { data: cards = [], isLoading: cardsLoading } = useQuery<Card[]>({
     queryKey: ["cards"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/cards`);
-      if (!res.ok) throw new Error("Failed to fetch cards");
-      return res.json();
+      const { data } = await api.api.cards.get();
+      return data ?? [];
     },
     staleTime: 5_000,
   });

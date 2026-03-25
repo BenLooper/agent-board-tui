@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { API_BASE } from "../../api/client";
+import { api } from "../../api/client";
 import type { Card, Epic, Feature } from "../../api/types";
 
 export function FeaturesSection() {
@@ -13,9 +13,8 @@ export function FeaturesSection() {
   const { data: epics = [] } = useQuery<Epic[]>({
     queryKey: ["epics"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/epics`);
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      const { data } = await api.api.epics.get();
+      return data ?? [];
     },
     staleTime: 30_000,
   });
@@ -23,9 +22,8 @@ export function FeaturesSection() {
   const { data: features = [] } = useQuery<Feature[]>({
     queryKey: ["features"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/features`);
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      const { data } = await api.api.features.get();
+      return data ?? [];
     },
     staleTime: 30_000,
   });
@@ -33,26 +31,20 @@ export function FeaturesSection() {
   const { data: cards = [] } = useQuery<Card[]>({
     queryKey: ["cards"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/cards`);
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
+      const { data } = await api.api.cards.get();
+      return data ?? [];
     },
     staleTime: 5_000,
   });
 
   const createFeatureMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`${API_BASE}/features`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim(),
-          epicId: selectedEpicId || undefined,
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to create feature");
-      return res.json();
+      const { data } = await api.api.features.post({
+        title: title.trim(),
+        description: description.trim(),
+        epicId: selectedEpicId,
+      } as { title: string; description: string; epicId: string });
+      return data!;
     },
     onSuccess: () => {
       setTitle("");
@@ -63,7 +55,7 @@ export function FeaturesSection() {
   });
 
   const deleteFeature = async (featureId: string) => {
-    await fetch(`${API_BASE}/features/${featureId}`, { method: "DELETE" });
+    await api.api.features({ id: featureId }).delete();
     queryClient.invalidateQueries({ queryKey: ["features"] });
     queryClient.invalidateQueries({ queryKey: ["cards"] });
     setDeletingId(null);

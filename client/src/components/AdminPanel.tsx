@@ -45,7 +45,7 @@ export function AdminPanel() {
             <button
               key={s}
               onClick={() => setActiveSection(s)}
-              className={`px-4 py-2 text-[11px] font-mono uppercase tracking-wider transition-colors ${
+              className={`px-4 py-2 text-[13px] font-mono uppercase tracking-wider transition-colors ${
                 activeSection === s
                   ? s === "danger"
                     ? "text-[#f87171] border-b-2 border-[#f87171]"
