@@ -1,8 +1,14 @@
 {
-  "name": "agent-board",
+  "name": "agent-board-tui",
   "version": "1.0.0",
-  "private": true,
-  "workspaces": ["server", "tui"],
+  "bin": {
+    "agent-board-tui": "scripts/cli.ts"
+  },
+  "files": [
+    "scripts/",
+    "commands/",
+    "AGENT_API.md"
+  ],
   "scripts": {
     "dev": "bun scripts/dev.ts",
     "server": "bun run --filter server dev",
