@@ -28,8 +28,6 @@ function AppInner() {
   const setView = useStore((s) => s.setView);
   const focusMode = useStore((s) => s.focusMode);
   const setFocusMode = useStore((s) => s.setFocusMode);
-  const helpOpen = useStore((s) => s.helpOpen);
-  const setHelpOpen = useStore((s) => s.setHelpOpen);
   const openCardId = useStore((s) => s.openCardId);
   const setOpenCardId = useStore((s) => s.setOpenCardId);
   const pendingInputRequests = useStore((s) => s.pendingInputRequests);
@@ -64,19 +62,6 @@ function AppInner() {
       return;
     }
 
-    if (input === "?") {
-      if (helpOpen) {
-        setHelpOpen(false);
-        setFocusMode(view as "board" | "chat" | "admin");
-      } else {
-        setHelpOpen(true);
-        setFocusMode("help");
-      }
-      return;
-    }
-
-    if (helpOpen) return;
-
     if (input === "b") {
       setView("board");
       setFocusMode("board");
@@ -86,6 +71,9 @@ function AppInner() {
     } else if (input === "a") {
       setView("admin");
       setFocusMode("admin");
+    } else if (input === "?") {
+      setView("help");
+      setFocusMode("help");
     }
   });
 
@@ -115,11 +103,7 @@ function AppInner() {
     <Box flexDirection="column" height="100%">
       <Header />
 
-      {helpOpen ? (
-        <Box flexGrow={1} flexDirection="column" justifyContent="center" alignItems="center">
-          <HelpOverlay />
-        </Box>
-      ) : focusMode === "input-modal" && firstPendingInput ? (
+      {focusMode === "input-modal" && firstPendingInput ? (
         <Box flexGrow={1} flexDirection="column" justifyContent="center" alignItems="center">
           <InputModal request={firstPendingInput} />
         </Box>
@@ -134,6 +118,7 @@ function AppInner() {
           )}
           {view === "chat" && <ChatView />}
           {view === "admin" && <AdminView />}
+          {view === "help" && <HelpOverlay />}
         </Box>
       )}
 

@@ -4,7 +4,7 @@ import { join } from "path";
 import { readFileSync, writeFileSync, mkdirSync } from "fs";
 import type { InputRequest } from "../api/types";
 
-export type View = "board" | "chat" | "admin";
+export type View = "board" | "chat" | "admin" | "help";
 export type AdminTab = "statuses" | "epics" | "features" | "rules" | "theme";
 export type WsStatus = "connecting" | "connected" | "disconnected";
 
@@ -90,10 +90,6 @@ interface Store {
   lastWsEvent: number;
   triggerRefetch: () => void;
 
-  // Help overlay
-  helpOpen: boolean;
-  setHelpOpen: (b: boolean) => void;
-
   // Theme
   themeIndex: number;
   setThemeIndex: (n: number) => void;
@@ -159,9 +155,6 @@ export const useStore = create<Store>((set) => ({
 
   lastWsEvent: 0,
   triggerRefetch: () => set((s) => ({ lastWsEvent: s.lastWsEvent + 1 })),
-
-  helpOpen: false,
-  setHelpOpen: (b) => set({ helpOpen: b }),
 
   themeIndex: loadThemeIndex(),
   setThemeIndex: (n) => {

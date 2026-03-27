@@ -1,114 +1,89 @@
 import React from "react";
-import { Box, Text, useInput } from "ink";
-import { useStore } from "../store";
+import { Box, Text } from "ink";
 import { useTheme } from "../hooks/useTheme";
 
 export function HelpOverlay() {
   const theme = useTheme();
-  const setHelpOpen = useStore((s) => s.setHelpOpen);
-  const setFocusMode = useStore((s) => s.setFocusMode);
-  const view = useStore((s) => s.view);
-  const focusMode = useStore((s) => s.focusMode);
-
-  useInput(
-    (input, key) => {
-      if (input === "?" || key.escape || input === "q") {
-        setHelpOpen(false);
-        setFocusMode(view as "board" | "chat" | "admin");
-      }
-    },
-    { isActive: focusMode === "help" }
-  );
 
   const sections = [
     {
       title: "Global",
       keys: [
-        ["b", "Switch to Board view"],
-        ["c", "Switch to Chat view"],
-        ["a", "Switch to Admin view"],
-        ["Ctrl+A", "Open Admin from anywhere"],
-        ["?", "Toggle this help screen"],
-        ["Ctrl+R", "Restart TUI (server keeps running)"],
+        ["b / c / a", "Board / Chat / Admin"],
+        ["Ctrl+A", "Admin from anywhere"],
+        ["?", "This help screen"],
+        ["Ctrl+R", "Restart TUI"],
         ["Ctrl+C", "Quit"],
       ],
     },
     {
       title: "Board",
       keys: [
-        ["h / l", "Move left / right between columns"],
-        ["j / k", "Move down / up within a column"],
-        ["Enter", "Open card detail"],
-        ["i", "Answer pending input request"],
-        ["Esc", "Close card / go back"],
+        ["h / l", "Move column"],
+        ["j / k", "Move card"],
+        ["Enter", "Open card"],
+        ["i", "Answer input request"],
+        ["Esc", "Go back"],
       ],
     },
     {
-      title: "Card Detail",
+      title: "Card",
       keys: [
-        ["j / k", "Scroll comments"],
-        ["e", "Edit card title/description"],
-        ["s", "Change card status"],
-        ["n", "Add a comment"],
-        ["Esc", "Close card"],
+        ["j / k", "Scroll"],
+        ["e", "Edit"],
+        ["s", "Change status"],
+        ["n", "Add comment"],
+        ["Esc", "Close"],
       ],
     },
     {
       title: "Chat",
       keys: [
-        ["j / k", "Move between conversations"],
-        ["Enter", "Open conversation thread"],
-        ["n", "Compose new message"],
-        ["Esc", "Back / close"],
+        ["j / k", "Move"],
+        ["Enter", "Open thread"],
+        ["n", "New message"],
+        ["Esc", "Back"],
       ],
     },
     {
       title: "Admin",
       keys: [
         ["h / l", "Switch tabs"],
-        ["j / k", "Select item"],
-        ["n", "Create new item"],
-        ["d", "Delete selected item"],
-        ["e", "Edit selected item"],
+        ["j / k", "Select"],
+        ["n / d / e", "New / Delete / Edit"],
         ["Esc", "Back"],
       ],
     },
   ];
 
+  const row1 = sections.slice(0, 3);
+  const row2 = sections.slice(3);
+
+  const renderSection = (section: (typeof sections)[0]) => (
+    <Box key={section.title} flexDirection="column" minWidth={28} marginRight={3}>
+      <Text bold color={theme.accent}>{section.title}</Text>
+      {section.keys.map(([key, desc]) => (
+        <Box key={key}>
+          <Text color={theme.text} bold>{key.padEnd(10)}</Text>
+          <Text color={theme.secondary}>{desc}</Text>
+        </Box>
+      ))}
+    </Box>
+  );
+
   return (
     <Box
       flexDirection="column"
-      borderStyle="double"
+      borderStyle="single"
       borderColor={theme.primary}
       paddingX={2}
       paddingY={1}
     >
-      <Box marginBottom={1} justifyContent="center">
-        <Text bold color={theme.primary}>
-          Keyboard Shortcuts
-        </Text>
+      <Box marginBottom={1}>
+        {row1.map(renderSection)}
       </Box>
-      <Box gap={4}>
-        {sections.map((section) => (
-          <Box key={section.title} flexDirection="column" minWidth={30}>
-            <Text bold color={theme.accent} underline>
-              {section.title}
-            </Text>
-            {section.keys.map(([key, desc]) => (
-              <Box key={key} gap={1}>
-                <Text color={theme.text} bold>
-                  {key.padEnd(16)}
-                </Text>
-                <Text color={theme.secondary}>{desc}</Text>
-              </Box>
-            ))}
-          </Box>
-        ))}
-      </Box>
-      <Box marginTop={1} justifyContent="center">
-        <Text color={theme.secondary} dimColor>
-          Press ? or Esc to close
-        </Text>
+      <Box>
+        {row2.map(renderSection)}
       </Box>
     </Box>
   );
