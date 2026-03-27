@@ -1,6 +1,6 @@
 {
   "name": "@benlooper/agent-board-tui",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "bin": {
     "agent-board-tui": "scripts/cli.ts"
   },
