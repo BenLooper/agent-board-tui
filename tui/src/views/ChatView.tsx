@@ -94,6 +94,12 @@ export function ChatView() {
           setComposeValue("");
           setChatMode("compose");
         }
+      } else if (chatMode === "compose") {
+        if (key.escape) {
+          const back = composeForAgent ? "thread" : "conversations";
+          setChatMode(back);
+          setFocusMode(composeForAgent ? "chat-thread" : "chat");
+        }
       }
     },
     { isActive: focusMode === "chat" || focusMode === "chat-thread" }
