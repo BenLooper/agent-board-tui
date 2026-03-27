@@ -8,7 +8,8 @@
     "scripts/",
     "commands/",
     "AGENT_API.md",
-    "dist/server.js"
+    "dist/server.js",
+    "dist/tui.js"
   ],
   "scripts": {
     "dev": "bun scripts/dev.ts",
@@ -18,9 +19,10 @@
     "install:all": "bun install",
     "setup": "bun scripts/setup.ts",
     "build:server": "bun build server/src/index.ts --outfile dist/server.js --target bun",
-    "prepublishOnly": "bun run build:server"
+    "build:tui": "bun scripts/build-tui.ts",
+    "prepublishOnly": "bun run build:server && bun run build:tui"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
-  }
+  },
 }
