@@ -1,8 +1,7 @@
 import React from "react";
 import { Box, Text, useInput } from "ink";
 import { useStore, type AdminTab } from "../store";
-import { useTheme } from "../hooks/useTheme";
-import { StatusesAdmin } from "../components/admin/StatusesAdmin";
+import { useTheme } from "../hooks/useTheme";import { StatusesAdmin } from "../components/admin/StatusesAdmin";
 import { EpicsAdmin } from "../components/admin/EpicsAdmin";
 import { FeaturesAdmin } from "../components/admin/FeaturesAdmin";
 import { TransitionRulesAdmin } from "../components/admin/TransitionRulesAdmin";
@@ -21,12 +20,17 @@ export function AdminView() {
   const focusMode = useStore((s) => s.focusMode);
   const adminTab = useStore((s) => s.adminTab);
   const setAdminTab = useStore((s) => s.setAdminTab);
+  const setView = useStore((s) => s.setView);
+  const setFocusMode = useStore((s) => s.setFocusMode);
 
   const currentTabIdx = TABS.findIndex((t) => t.key === adminTab);
 
   useInput(
     (input, key) => {
-      if (input === "l" || key.rightArrow) {
+      if (key.escape) {
+        setView("board");
+        setFocusMode("board");
+      } else if (input === "l" || key.rightArrow) {
         const next = (currentTabIdx + 1) % TABS.length;
         setAdminTab(TABS[next]!.key);
       } else if (input === "h" || key.leftArrow) {

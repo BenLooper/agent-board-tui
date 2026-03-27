@@ -1,12 +1,17 @@
 import { spawn } from "child_process";
+import { openSync } from "fs";
+import { join } from "path";
 
 const isWindows = process.platform === "win32";
 const bunCmd = isWindows ? "bun.exe" : "bun";
 const RESTART_CODE = 75;
 
-// Server runs in background — no stdin needed, but show its output
+// Redirect server output to a log file so it doesn't pollute the TUI terminal
+const logPath = join(import.meta.dir, "../server.log");
+const logFd = openSync(logPath, "w");
+
 const server = spawn(bunCmd, ["run", "--filter", "server", "dev"], {
-  stdio: ["ignore", "inherit", "inherit"],
+  stdio: ["ignore", logFd, logFd],
 });
 
 server.on("error", (err) => {

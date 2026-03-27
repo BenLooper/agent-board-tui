@@ -43,10 +43,12 @@ export function Header() {
         <Text color={view === "admin" ? theme.primary : theme.secondary} bold={view === "admin"}>
           [<Text color={theme.text}>a</Text>]dmin
         </Text>
+        <Text color={view === "help" ? theme.primary : theme.secondary} bold={view === "help"}>
+          [<Text color={theme.text}>?</Text>]help
+        </Text>
         <Text color={wsColor}>
           {wsIndicator} WS
         </Text>
-        <Text color={theme.secondary}>[<Text color={theme.text}>?</Text>]help</Text>
       </Box>
     </Box>
   );

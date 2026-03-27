@@ -59,7 +59,7 @@ export function InputModal({ request }: Props) {
         setFocusMode(view as "board" | "chat" | "admin");
       }
     },
-    { isActive: focusMode === "input-modal" && question?.type !== "text" }
+    { isActive: focusMode === "input-modal" }
   );
 
   if (!question) return null;
