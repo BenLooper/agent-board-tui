@@ -9,9 +9,9 @@ Check if the board server is up:
 
     curl -s --max-time 2 http://localhost:31377/api/cards
 
-If that fails, start it:
+If that fails, start it in the background:
 
-    agent-board-tui
+    agent-board-tui start
 
 Then poll every 2s (up to 15s) until the health check passes.
 

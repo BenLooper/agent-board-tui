@@ -5,10 +5,12 @@ import { statuses } from "./schema";
 import { randomUUID } from "crypto";
 import { join } from "path";
 import { mkdirSync } from "fs";
+import { homedir } from "os";
 
-const DB_PATH = join(import.meta.dir, "../../../data/agent-board.db");
+const DB_DIR = join(homedir(), ".local", "share", "agent-board");
+const DB_PATH = join(DB_DIR, "agent-board.db");
 
-mkdirSync(join(import.meta.dir, "../../../data"), { recursive: true });
+mkdirSync(DB_DIR, { recursive: true });
 
 const sqlite = new Database(DB_PATH, { create: true });
 

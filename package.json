@@ -1,5 +1,5 @@
 {
-  "name": "agent-board-tui",
+  "name": "@benlooper/agent-board-tui",
   "version": "1.0.0",
   "bin": {
     "agent-board-tui": "scripts/cli.ts"
@@ -7,7 +7,8 @@
   "files": [
     "scripts/",
     "commands/",
-    "AGENT_API.md"
+    "AGENT_API.md",
+    "dist/server.js"
   ],
   "scripts": {
     "dev": "bun scripts/dev.ts",
@@ -15,7 +16,9 @@
     "tui": "bun scripts/tui.ts",
     "build": "bun run --filter '*' build",
     "install:all": "bun install",
-    "setup": "bun scripts/setup.ts"
+    "setup": "bun scripts/setup.ts",
+    "build:server": "bun build server/src/index.ts --outfile dist/server.js --target bun",
+    "prepublishOnly": "bun run build:server"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
